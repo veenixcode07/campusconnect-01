@@ -10,6 +10,9 @@ import { Dashboard } from "@/pages/Dashboard";
 import { Notices } from "@/pages/Notices";
 import { Resources } from "@/pages/Resources";
 import { Attendance } from "@/pages/Attendance";
+import { Assignments } from "@/pages/Assignments";
+import { QueryForum } from "@/pages/QueryForum";
+import { StudentTracking } from "@/pages/StudentTracking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +32,9 @@ const AuthenticatedApp = () => {
         <Route path="/notices" element={<Notices />} />
         <Route path="/resources" element={<Resources />} />
         <Route path="/attendance" element={<Attendance />} />
+        <Route path="/assignments" element={<Assignments />} />
+        <Route path="/queries" element={<QueryForum />} />
+        <Route path="/tracking" element={<StudentTracking />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AppLayout>
