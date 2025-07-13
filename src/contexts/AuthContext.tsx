@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, AuthState, UserRole } from '@/types/auth';
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
+  login: (sapid: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -19,7 +19,7 @@ export const useAuth = () => {
 
 // Mock users for demo - in real app this would come from Supabase
 const mockUsers: Record<string, { password: string; user: User }> = {
-  'student@college.edu': {
+  'STU001': {
     password: 'password123',
     user: {
       id: '1',
@@ -31,7 +31,7 @@ const mockUsers: Record<string, { password: string; user: User }> = {
       createdAt: new Date().toISOString(),
     }
   },
-  'admin@college.edu': {
+  'ADM001': {
     password: 'admin123',
     user: {
       id: '2',
@@ -43,7 +43,7 @@ const mockUsers: Record<string, { password: string; user: User }> = {
       createdAt: new Date().toISOString(),
     }
   },
-  'faculty@college.edu': {
+  'FAC001': {
     password: 'faculty123',
     user: {
       id: '3',
@@ -79,16 +79,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (sapid: string, password: string): Promise<void> => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const userRecord = mockUsers[email];
+      const userRecord = mockUsers[sapid];
       if (!userRecord || userRecord.password !== password) {
-        throw new Error('Invalid email or password');
+        throw new Error('Invalid SAPID or password');
       }
 
       const user = userRecord.user;

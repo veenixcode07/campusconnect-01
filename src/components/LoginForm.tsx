@@ -8,14 +8,14 @@ import { Loader2, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [sapid, setSapid] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      await login(sapid, password);
     } catch (error) {
       // Error is handled by the auth context
     }
@@ -38,13 +38,13 @@ export const LoginForm: React.FC = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="sapid">SAPID</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="your.email@college.edu"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="sapid"
+                type="text"
+                placeholder="Enter your SAPID"
+                value={sapid}
+                onChange={(e) => setSapid(e.target.value)}
                 required
                 disabled={loading}
               />
@@ -83,9 +83,9 @@ export const LoginForm: React.FC = () => {
           <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm">
             <p className="font-medium mb-2">Demo Accounts:</p>
             <div className="space-y-1 text-xs">
-              <p><strong>Student:</strong> student@college.edu / password123</p>
-              <p><strong>Admin:</strong> admin@college.edu / admin123</p>
-              <p><strong>Faculty:</strong> faculty@college.edu / faculty123</p>
+              <p><strong>Student:</strong> STU001 / password123</p>
+              <p><strong>Admin:</strong> ADM001 / admin123</p>
+              <p><strong>Faculty:</strong> FAC001 / faculty123</p>
             </div>
           </div>
         </CardContent>
