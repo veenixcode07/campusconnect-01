@@ -1,52 +1,29 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@/contexts/QueryContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { MessageSquare, ThumbsUp, Search, Plus, User } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { MessageSquare, ThumbsUp, Search, Plus, User, CheckCircle, Send } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export const QueryForum: React.FC = () => {
   const { user } = useAuth();
+  const { queries, addQuery, addAnswer, likeQuery, markAnswerAsAccepted } = useQuery();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-
-  const queries = [
-    {
-      id: 1,
-      title: "Help with Data Structures Assignment",
-      content: "I'm having trouble implementing a binary search tree. Can someone help?",
-      author: "John Doe",
-      subject: "Computer Science",
-      replies: 5,
-      likes: 12,
-      solved: false,
-      timestamp: "2024-01-15T10:30:00Z"
-    },
-    {
-      id: 2,
-      title: "Physics Lab Equipment Issue",
-      content: "The oscilloscope in Lab 2 seems to be malfunctioning. Who should I contact?",
-      author: "Jane Smith",
-      subject: "Physics",
-      replies: 2,
-      likes: 8,
-      solved: true,
-      timestamp: "2024-01-14T14:20:00Z"
-    },
-    {
-      id: 3,
-      title: "Study Group for Mathematics",
-      content: "Looking for students to form a study group for advanced calculus.",
-      author: "Mike Johnson",
-      subject: "Mathematics",
-      replies: 15,
-      likes: 25,
-      solved: false,
-      timestamp: "2024-01-13T09:15:00Z"
-    }
-  ];
+  const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
+  const [newAnswer, setNewAnswer] = useState('');
+  
+  // Ask Question Form State
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [questionTitle, setQuestionTitle] = useState('');
+  const [questionSubject, setQuestionSubject] = useState('');
+  const [questionContent, setQuestionContent] = useState('');
 
   const filteredQueries = queries.filter(query =>
     query.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,11 +31,79 @@ export const QueryForum: React.FC = () => {
     query.subject.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handlePostQuestion = () => {
+    if (!questionTitle.trim() || !questionSubject.trim() || !questionContent.trim()) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    addQuery({
+      title: questionTitle.trim(),
+      subject: questionSubject.trim(),
+      content: questionContent.trim(),
+      author: user?.name || 'Anonymous'
+    });
+
+    // Reset form
+    setQuestionTitle('');
+    setQuestionSubject('');
+    setQuestionContent('');
+    setIsDialogOpen(false);
+
+    toast({
+      title: "Success",
+      description: "Your question has been posted!"
+    });
+  };
+
+  const handleCancelQuestion = () => {
+    setQuestionTitle('');
+    setQuestionSubject('');
+    setQuestionContent('');
+    setIsDialogOpen(false);
+  };
+
+  const handleLike = (queryId: string) => {
+    if (user?.id) {
+      likeQuery(queryId, user.id);
+    }
+  };
+
+  const handleAddAnswer = (queryId: string) => {
+    if (!newAnswer.trim() || !user) return;
+
+    addAnswer(queryId, {
+      content: newAnswer.trim(),
+      author: user.name,
+      authorRole: user.role
+    });
+
+    setNewAnswer('');
+    toast({
+      title: "Success",
+      description: "Your answer has been posted!"
+    });
+  };
+
+  const handleAcceptAnswer = (queryId: string, answerId: string) => {
+    markAnswerAsAccepted(queryId, answerId);
+    toast({
+      title: "Success",
+      description: "Answer marked as accepted!"
+    });
+  };
+
+  const selectedQueryData = selectedQuery ? queries.find(q => q.id === selectedQuery) : null;
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Query Forum</h1>
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
               <Plus className="w-4 h-4" />
@@ -70,12 +115,25 @@ export const QueryForum: React.FC = () => {
               <DialogTitle>Ask a Question</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <Input placeholder="Question title" />
-              <Input placeholder="Subject/Category" />
-              <Textarea placeholder="Describe your question in detail..." rows={5} />
+              <Input 
+                placeholder="Question title" 
+                value={questionTitle}
+                onChange={(e) => setQuestionTitle(e.target.value)}
+              />
+              <Input 
+                placeholder="Subject/Category" 
+                value={questionSubject}
+                onChange={(e) => setQuestionSubject(e.target.value)}
+              />
+              <Textarea 
+                placeholder="Describe your question in detail..." 
+                rows={5}
+                value={questionContent}
+                onChange={(e) => setQuestionContent(e.target.value)}
+              />
               <div className="flex justify-end gap-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Post Question</Button>
+                <Button variant="outline" onClick={handleCancelQuestion}>Cancel</Button>
+                <Button onClick={handlePostQuestion}>Post Question</Button>
               </div>
             </div>
           </DialogContent>
@@ -130,11 +188,116 @@ export const QueryForum: React.FC = () => {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleLike(query.id)}
+                    className={query.likedBy?.includes(user?.id || '') ? 'bg-primary/10' : ''}
+                  >
                     <ThumbsUp className="w-4 h-4 mr-1" />
                     Like
                   </Button>
-                  <Button size="sm">View Discussion</Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="sm" onClick={() => setSelectedQuery(query.id)}>
+                        View Discussion
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <MessageSquare className="w-5 h-5" />
+                          {selectedQueryData?.title}
+                          {selectedQueryData?.solved && (
+                            <Badge className="bg-green-500 text-white">Solved</Badge>
+                          )}
+                        </DialogTitle>
+                      </DialogHeader>
+                      
+                      {selectedQueryData && (
+                        <div className="space-y-6">
+                          {/* Original Question */}
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <User className="w-4 h-4" />
+                              {selectedQueryData.author} • {selectedQueryData.subject} • {new Date(selectedQueryData.timestamp).toLocaleString()}
+                            </div>
+                            <p className="text-base">{selectedQueryData.content}</p>
+                          </div>
+
+                          <Separator />
+
+                          {/* Answers */}
+                          <div className="space-y-4">
+                            <h3 className="font-semibold flex items-center gap-2">
+                              <MessageSquare className="w-4 h-4" />
+                              Answers ({selectedQueryData.answers.length})
+                            </h3>
+                            
+                            {selectedQueryData.answers.map((answer) => (
+                              <Card key={answer.id} className={answer.isAccepted ? 'border-green-500 bg-green-50 dark:bg-green-950' : ''}>
+                                <CardContent className="pt-4">
+                                  <div className="flex justify-between items-start mb-2">
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                      <User className="w-4 h-4" />
+                                      {answer.author}
+                                      <Badge variant={answer.authorRole === 'faculty' ? 'default' : 'secondary'}>
+                                        {answer.authorRole}
+                                      </Badge>
+                                      • {new Date(answer.timestamp).toLocaleString()}
+                                      {answer.isAccepted && (
+                                        <Badge className="bg-green-500 text-white ml-2">
+                                          <CheckCircle className="w-3 h-3 mr-1" />
+                                          Accepted Answer
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    {user?.role === 'faculty' && selectedQueryData.author === user.name && !selectedQueryData.solved && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => handleAcceptAnswer(selectedQueryData.id, answer.id)}
+                                        className="text-green-600 border-green-600 hover:bg-green-50"
+                                      >
+                                        <CheckCircle className="w-4 h-4 mr-1" />
+                                        Accept
+                                      </Button>
+                                    )}
+                                  </div>
+                                  <p>{answer.content}</p>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+
+                          {/* Add Answer Form */}
+                          {user && (
+                            <div className="space-y-4">
+                              <Separator />
+                              <div className="space-y-3">
+                                <h4 className="font-medium">Your Answer</h4>
+                                <Textarea
+                                  placeholder="Write your answer here..."
+                                  value={newAnswer}
+                                  onChange={(e) => setNewAnswer(e.target.value)}
+                                  rows={4}
+                                />
+                                <div className="flex justify-end">
+                                  <Button 
+                                    onClick={() => handleAddAnswer(selectedQueryData.id)}
+                                    disabled={!newAnswer.trim()}
+                                  >
+                                    <Send className="w-4 h-4 mr-2" />
+                                    Post Answer
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
             </CardContent>
