@@ -44,88 +44,138 @@ export const useQuery = () => {
 const initialQueries: Query[] = [
   {
     id: '1',
-    title: "Help with Data Structures Assignment",
-    content: "I'm having trouble implementing a binary search tree. Can someone help?",
-    author: "John Doe",
-    subject: "Computer Science",
-    replies: 2,
-    likes: 12,
-    solved: false,
-    timestamp: "2024-01-15T10:30:00Z",
+    title: "Advanced Database Query Optimization",
+    content: "I'm working on optimizing complex SQL queries for our database project. The queries involve multiple joins and subqueries, and they're running very slowly. Can anyone help with optimization techniques?",
+    author: "Alice Cooper",
+    subject: "Database Systems",
+    replies: 3,
+    likes: 18,
+    solved: true,
+    timestamp: "2024-01-20T09:30:00Z",
     answers: [
       {
         id: '1',
-        content: "You should start by defining the node structure. Each node should have a value, left child, and right child pointer.",
-        author: "Dr. Smith",
+        content: "Start by analyzing your execution plan. Look for table scans and consider adding appropriate indexes. Also, try to rewrite subqueries as joins where possible for better performance.",
+        author: "Prof. Williams",
         authorRole: 'faculty',
-        timestamp: "2024-01-15T11:00:00Z"
+        timestamp: "2024-01-20T10:15:00Z",
+        isAccepted: true
       },
       {
         id: '2',
-        content: "Also, make sure to handle the recursive insertion properly. Check if the current node is null, and if so, create a new node.",
-        author: "Sarah Wilson",
+        content: "I had a similar issue. Using EXPLAIN ANALYZE helped me identify bottlenecks. Also consider partitioning large tables if your dataset is huge.",
+        author: "Mark Thompson",
         authorRole: 'student',
-        timestamp: "2024-01-15T11:30:00Z"
+        timestamp: "2024-01-20T11:00:00Z"
+      },
+      {
+        id: '3',
+        content: "Don't forget about query caching and consider using materialized views for frequently accessed complex queries.",
+        author: "Dr. Chen",
+        authorRole: 'faculty',
+        timestamp: "2024-01-20T14:30:00Z"
       }
     ],
-    likedBy: []
+    likedBy: ['STU001', 'STU002', 'FAC001']
   },
   {
     id: '2',
-    title: "Physics Lab Equipment Issue",
-    content: "The oscilloscope in Lab 2 seems to be malfunctioning. Who should I contact?",
-    author: "Jane Smith",
-    subject: "Physics",
-    replies: 1,
-    likes: 8,
-    solved: true,
-    timestamp: "2024-01-14T14:20:00Z",
-    answers: [
-      {
-        id: '3',
-        content: "Please contact the lab technician Mr. Johnson at lab.support@college.edu or visit the equipment maintenance office in Room 101.",
-        author: "Prof. Davis",
-        authorRole: 'faculty',
-        timestamp: "2024-01-14T15:00:00Z",
-        isAccepted: true
-      }
-    ],
-    likedBy: []
-  },
-  {
-    id: '3',
-    title: "Study Group for Mathematics",
-    content: "Looking for students to form a study group for advanced calculus.",
-    author: "Mike Johnson",
-    subject: "Mathematics",
-    replies: 3,
-    likes: 25,
+    title: "Machine Learning Algorithm Selection",
+    content: "For my final project, I need to classify customer behavior data. I'm torn between using Random Forest, SVM, or Neural Networks. What factors should I consider when choosing?",
+    author: "David Kim",
+    subject: "Machine Learning",
+    replies: 2,
+    likes: 15,
     solved: false,
-    timestamp: "2024-01-13T09:15:00Z",
+    timestamp: "2024-01-19T14:20:00Z",
     answers: [
       {
         id: '4',
-        content: "I'm interested! I'm also struggling with integration by parts. What time works for everyone?",
-        author: "Emma Davis",
-        authorRole: 'student',
-        timestamp: "2024-01-13T10:00:00Z"
+        content: "Consider your dataset size, interpretability needs, and computational resources. Random Forest is great for tabular data and provides feature importance. Neural Networks need more data but can capture complex patterns.",
+        author: "Dr. Patel",
+        authorRole: 'faculty',
+        timestamp: "2024-01-19T15:45:00Z"
       },
       {
         id: '5',
-        content: "Count me in! How about we meet every Tuesday and Thursday at 3 PM in the library?",
-        author: "Alex Chen",
+        content: "I'd suggest starting with Random Forest for baseline performance, then try SVM if you need better results. Neural Networks should be your last resort unless you have a large dataset.",
+        author: "Lisa Zhang",
         authorRole: 'student',
-        timestamp: "2024-01-13T11:00:00Z"
-      },
-      {
-        id: '6',
-        content: "Great initiative! If you need any guidance, feel free to reach out during my office hours.",
-        author: "Dr. Martinez",
-        authorRole: 'faculty',
-        timestamp: "2024-01-13T12:00:00Z"
+        timestamp: "2024-01-19T16:30:00Z"
       }
     ],
-    likedBy: []
+    likedBy: ['STU003', 'ADM001']
+  },
+  {
+    id: '3',
+    title: "Quantum Computing Study Group",
+    content: "Is anyone interested in forming a study group for Quantum Computing fundamentals? We could meet weekly to discuss concepts and solve problems together.",
+    author: "Sarah Johnson",
+    subject: "Quantum Computing",
+    replies: 4,
+    likes: 22,
+    solved: false,
+    timestamp: "2024-01-18T11:15:00Z",
+    answers: [
+      {
+        id: '6',
+        content: "Count me in! I'm struggling with quantum gates and circuits. Group study would be really helpful.",
+        author: "Tom Wilson",
+        authorRole: 'student',
+        timestamp: "2024-01-18T12:00:00Z"
+      },
+      {
+        id: '7',
+        content: "Great idea! I suggest we start with the basics of qubits and superposition before moving to more complex topics.",
+        author: "Emily Davis",
+        authorRole: 'student',
+        timestamp: "2024-01-18T13:30:00Z"
+      },
+      {
+        id: '8',
+        content: "I'm interested too! Maybe we can use IBM Qiskit for practical exercises.",
+        author: "Alex Rodriguez",
+        authorRole: 'student',
+        timestamp: "2024-01-18T14:15:00Z"
+      },
+      {
+        id: '9',
+        content: "Excellent initiative! I can provide guidance and additional resources. Consider meeting in the physics lab where we have quantum simulation software.",
+        author: "Prof. Anderson",
+        authorRole: 'faculty',
+        timestamp: "2024-01-18T16:00:00Z"
+      }
+    ],
+    likedBy: ['STU001', 'STU004', 'STU005', 'FAC002']
+  },
+  {
+    id: '4',
+    title: "Cybersecurity Career Advice",
+    content: "I'm a second-year CS student interested in cybersecurity. What skills should I focus on developing, and are there any internship opportunities you'd recommend?",
+    author: "Jessica Lee",
+    subject: "Career Guidance",
+    replies: 2,
+    likes: 28,
+    solved: true,
+    timestamp: "2024-01-17T10:00:00Z",
+    answers: [
+      {
+        id: '10',
+        content: "Focus on networking fundamentals, cryptography, and hands-on experience with security tools. Participate in CTF competitions and consider certifications like CompTIA Security+. I can share some internship opportunities.",
+        author: "Prof. Martinez",
+        authorRole: 'faculty',
+        timestamp: "2024-01-17T11:30:00Z",
+        isAccepted: true
+      },
+      {
+        id: '11',
+        content: "Also learn Python and bash scripting - they're essential for security automation. Check out HackTheBox and TryHackMe for practical experience.",
+        author: "Ryan Foster",
+        authorRole: 'student',
+        timestamp: "2024-01-17T15:20:00Z"
+      }
+    ],
+    likedBy: ['STU001', 'STU002', 'STU003', 'STU006', 'ADM001']
   }
 ];
 

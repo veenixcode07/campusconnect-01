@@ -17,7 +17,9 @@ export const LoginForm: React.FC = () => {
     try {
       await login(sapid, password);
     } catch (error) {
-      // Error is handled by the auth context
+      // Clear fields on error
+      setSapid('');
+      setPassword('');
     }
   };
 

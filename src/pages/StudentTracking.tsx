@@ -5,57 +5,87 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, User, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
+import { StudentProfileModal } from '@/components/StudentProfileModal';
 
 export const StudentTracking: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState('all');
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const students = [
     {
       id: 1,
-      name: "John Doe",
-      rollNumber: "CS2021001",
+      name: "Emma Thompson",
+      rollNumber: "CS2022001", 
       class: "CS-A",
-      attendance: 85,
-      averageGrade: 8.2,
-      lastActivity: "2024-01-15",
+      attendance: 94,
+      averageGrade: 8.7,
+      lastActivity: "2024-01-20",
       status: "active",
       trend: "up"
     },
     {
       id: 2,
-      name: "Jane Smith",
-      rollNumber: "CS2021002",
-      class: "CS-A",
-      attendance: 92,
-      averageGrade: 9.1,
-      lastActivity: "2024-01-15",
+      name: "Alexander Chen",
+      rollNumber: "CS2022002",
+      class: "CS-A", 
+      attendance: 89,
+      averageGrade: 9.2,
+      lastActivity: "2024-01-19",
       status: "active",
       trend: "up"
     },
     {
       id: 3,
-      name: "Mike Johnson",
-      rollNumber: "CS2021003",
+      name: "Maria Rodriguez",
+      rollNumber: "CS2022003",
       class: "CS-B",
-      attendance: 68,
-      averageGrade: 6.5,
-      lastActivity: "2024-01-13",
+      attendance: 72,
+      averageGrade: 7.1,
+      lastActivity: "2024-01-18",
+      status: "needs_attention", 
+      trend: "stable"
+    },
+    {
+      id: 4,
+      name: "James Wilson",
+      rollNumber: "CS2022004",
+      class: "CS-A",
+      attendance: 63,
+      averageGrade: 6.2,
+      lastActivity: "2024-01-16",
       status: "at_risk",
       trend: "down"
     },
     {
-      id: 4,
-      name: "Sarah Wilson",
-      rollNumber: "CS2021004",
-      class: "CS-A",
-      attendance: 78,
-      averageGrade: 7.8,
-      lastActivity: "2024-01-14",
-      status: "needs_attention",
-      trend: "stable"
+      id: 5,
+      name: "Priya Patel",
+      rollNumber: "CS2022005",
+      class: "CS-B",
+      attendance: 91,
+      averageGrade: 8.9,
+      lastActivity: "2024-01-20",
+      status: "active",
+      trend: "up"
+    },
+    {
+      id: 6,
+      name: "David Kim",
+      rollNumber: "CS2022006",
+      class: "CS-C",
+      attendance: 85,
+      averageGrade: 8.4,
+      lastActivity: "2024-01-19",
+      status: "active", 
+      trend: "up"
     }
   ];
+
+  const handleViewProfile = (student: any) => {
+    setSelectedStudent(student);
+    setIsProfileModalOpen(true);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -150,14 +180,32 @@ export const StudentTracking: React.FC = () => {
               </div>
               
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">View Profile</Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleViewProfile(student)}
+                >
+                  View Profile
+                </Button>
                 <Button variant="outline" size="sm">Contact Student</Button>
                 <Button variant="outline" size="sm">Generate Report</Button>
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))}
       </div>
+
+      {/* Student Profile Modal */}
+      {selectedStudent && (
+        <StudentProfileModal
+          student={selectedStudent}
+          isOpen={isProfileModalOpen}
+          onClose={() => {
+            setIsProfileModalOpen(false);
+            setSelectedStudent(null);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -188,15 +188,43 @@ export const QueryForum: React.FC = () => {
                 </div>
                 
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleLike(query.id)}
-                    className={query.likedBy?.includes(user?.id || '') ? 'bg-primary/10' : ''}
-                  >
-                    <ThumbsUp className="w-4 h-4 mr-1" />
-                    Like
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className={query.likedBy?.includes(user?.id || '') ? 'bg-primary/10' : ''}
+                      >
+                        <ThumbsUp className="w-4 h-4 mr-1" />
+                        {query.likes} Likes
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Likes ({query.likes})</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-2">
+                        {query.likedBy && query.likedBy.length > 0 ? (
+                          query.likedBy.map((userId) => (
+                            <div key={userId} className="flex items-center gap-2 p-2 bg-muted rounded">
+                              <User className="w-4 h-4" />
+                              <span>User {userId}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-muted-foreground">No likes yet</p>
+                        )}
+                        <div className="flex justify-end pt-2">
+                          <Button
+                            onClick={() => handleLike(query.id)}
+                            className={query.likedBy?.includes(user?.id || '') ? 'bg-red-500 hover:bg-red-600' : ''}
+                          >
+                            {query.likedBy?.includes(user?.id || '') ? 'Unlike' : 'Like'}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button size="sm" onClick={() => setSelectedQuery(query.id)}>
@@ -252,7 +280,7 @@ export const QueryForum: React.FC = () => {
                                         </Badge>
                                       )}
                                     </div>
-                                    {user?.role === 'faculty' && selectedQueryData.author === user.name && !selectedQueryData.solved && (
+                                    {user?.role === 'faculty' && !selectedQueryData.solved && (
                                       <Button
                                         size="sm"
                                         variant="outline"
