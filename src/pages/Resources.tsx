@@ -19,108 +19,17 @@ import {
   Heart
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface Resource {
-  id: number;
-  title: string;
-  description: string;
-  type: 'pdf' | 'ppt' | 'doc' | 'video' | 'image' | 'other';
-  subject: string;
-  uploadedBy: string;
-  uploadDate: string;
-  size: string;
-  downloads: number;
-  likes: number;
-  tags: string[];
-}
+import { useApp } from '@/contexts/AppContext';
+import { useToast } from '@/hooks/use-toast';
 
 export const Resources: React.FC = () => {
   const { user } = useAuth();
+  const { resources, toggleResourceFavorite } = useApp();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
-
-  // Mock data - in real app this would come from API
-  const resources: Resource[] = [
-    {
-      id: 1,
-      title: 'Data Structures - Binary Trees Complete Guide',
-      description: 'Comprehensive guide covering binary trees, BST, AVL trees, and operations with examples.',
-      type: 'pdf',
-      subject: 'Data Structures',
-      uploadedBy: 'Dr. Sarah Wilson',
-      uploadDate: '2024-01-15',
-      size: '2.4 MB',
-      downloads: 156,
-      likes: 23,
-      tags: ['binary-trees', 'bst', 'algorithms']
-    },
-    {
-      id: 2,
-      title: 'Operating Systems - Process Scheduling Presentation',
-      description: 'Detailed presentation on various process scheduling algorithms including FCFS, SJF, Round Robin.',
-      type: 'ppt',
-      subject: 'Operating Systems',
-      uploadedBy: 'Prof. Michael Brown',
-      uploadDate: '2024-01-14',
-      size: '5.1 MB',
-      downloads: 134,
-      likes: 19,
-      tags: ['scheduling', 'processes', 'algorithms']
-    },
-    {
-      id: 3,
-      title: 'Computer Networks - OSI Model Explained',
-      description: 'Video lecture explaining the 7 layers of OSI model with real-world examples.',
-      type: 'video',
-      subject: 'Computer Networks',
-      uploadedBy: 'Dr. Emily Davis',
-      uploadDate: '2024-01-13',
-      size: '45.2 MB',
-      downloads: 89,
-      likes: 15,
-      tags: ['osi-model', 'networking', 'protocols']
-    },
-    {
-      id: 4,
-      title: 'Database Design - ER Diagrams Lab Manual',
-      description: 'Step-by-step lab manual for creating ER diagrams and database normalization.',
-      type: 'doc',
-      subject: 'Database Management',
-      uploadedBy: 'Prof. John Smith',
-      uploadDate: '2024-01-12',
-      size: '1.8 MB',
-      downloads: 98,
-      likes: 12,
-      tags: ['er-diagrams', 'normalization', 'database-design']
-    },
-    {
-      id: 5,
-      title: 'Software Engineering - UML Diagram Examples',
-      description: 'Collection of UML diagram examples for different software design patterns.',
-      type: 'pdf',
-      subject: 'Software Engineering',
-      uploadedBy: 'Dr. Lisa Johnson',
-      uploadDate: '2024-01-11',
-      size: '3.7 MB',
-      downloads: 76,
-      likes: 18,
-      tags: ['uml', 'design-patterns', 'software-design']
-    },
-    {
-      id: 6,
-      title: 'Algorithm Analysis - Time Complexity Cheat Sheet',
-      description: 'Quick reference for Big O notation and time complexity analysis of common algorithms.',
-      type: 'pdf',
-      subject: 'Data Structures',
-      uploadedBy: 'Teaching Assistant',
-      uploadDate: '2024-01-10',
-      size: '0.9 MB',
-      downloads: 203,
-      likes: 45,
-      tags: ['big-o', 'complexity', 'algorithms', 'cheat-sheet']
-    }
-  ];
+  const [showFavorites, setShowFavorites] = useState(false);
 
   const getFileIcon = (type: string) => {
     switch (type) {
@@ -144,14 +53,30 @@ export const Resources: React.FC = () => {
     }
   };
 
+  const handleToggleFavorite = (resourceId: string) => {
+    toggleResourceFavorite(resourceId);
+    toast({
+      title: "Success",
+      description: "Resource favorite status updated!",
+    });
+  };
+
+  const handlePreview = (resourceTitle: string) => {
+    toast({
+      title: "Preview",
+      description: `Preview for "${resourceTitle}" will be available soon.`,
+    });
+  };
+
   const filteredResources = resources.filter(resource => {
     const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesSubject = selectedSubject === 'all' || resource.subject === selectedSubject;
     const matchesType = selectedType === 'all' || resource.type === selectedType;
+    const matchesFavorites = !showFavorites || resource.favorited;
     
-    return matchesSearch && matchesSubject && matchesType;
+    return matchesSearch && matchesSubject && matchesType && matchesFavorites;
   });
 
   const canUpload = user?.role === 'admin' || user?.role === 'faculty';
@@ -211,6 +136,15 @@ export const Resources: React.FC = () => {
                 <SelectItem value="doc">Document</SelectItem>
                 <SelectItem value="video">Video</SelectItem>
                 <SelectItem value="image">Image</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={showFavorites ? 'favorited' : 'all'} onValueChange={(value) => setShowFavorites(value === 'favorited')}>
+              <SelectTrigger className="w-full sm:w-32">
+                <SelectValue placeholder="Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="favorited">Favorited</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -293,12 +227,20 @@ export const Resources: React.FC = () => {
                     <Download className="w-4 h-4 mr-2" />
                     Download
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handlePreview(resource.title)}
+                  >
                     <Eye className="w-4 h-4 mr-2" />
                     Preview
                   </Button>
-                  <Button variant="outline" size="sm">
-                    <Heart className="w-4 h-4" />
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleToggleFavorite(resource.id)}
+                  >
+                    <Heart className={`w-4 h-4 ${resource.favorited ? 'fill-red-500 text-red-500' : ''}`} />
                   </Button>
                 </div>
               </CardContent>

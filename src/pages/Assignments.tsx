@@ -1,77 +1,55 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Clock, FileText, Plus, Paperclip, User } from 'lucide-react';
+import { CalendarDays, Clock, FileText, Plus, Paperclip, User, Download, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export const Assignments: React.FC = () => {
   const { user } = useAuth();
-
-  const assignments = [
-    {
-      id: 1,
-      title: "Data Structures and Algorithms Project",
-      subject: "Computer Science",
-      dueDate: "2024-02-15",
-      description: "Implement a complete binary search tree with insert, delete, search operations and balanced tree functionality. Include unit tests and documentation.",
-      instructor: "Dr. Sarah Johnson",
-      attachments: ["project_requirements.pdf", "sample_test_cases.txt"],
-      createdDate: "2024-01-10"
-    },
-    {
-      id: 2,
-      title: "Quantum Physics Research Assignment",
-      subject: "Physics",
-      dueDate: "2024-02-20",
-      description: "Analyze the wave-particle duality experiment and write a comprehensive report on your findings. Include mathematical derivations and experimental observations.",
-      instructor: "Prof. Michael Chen",
-      attachments: ["experiment_guidelines.pdf", "reference_papers.zip"],
-      createdDate: "2024-01-12"
-    },
-    {
-      id: 3,
-      title: "Advanced Calculus Problem Set",
-      subject: "Mathematics",
-      dueDate: "2024-02-10",
-      description: "Solve integration problems from chapters 5-7. Show all working steps and provide graphical representations where applicable.",
-      instructor: "Dr. Emma Rodriguez",
-      attachments: ["problem_set.pdf"],
-      createdDate: "2024-01-08"
-    },
-    {
-      id: 4,
-      title: "Database Design Project",
-      subject: "Computer Science",
-      dueDate: "2024-02-25",
-      description: "Design and implement a complete database system for a library management system. Include ER diagrams, normalization, and SQL queries.",
-      instructor: "Prof. David Liu",
-      attachments: ["db_requirements.pdf", "sample_data.sql"],
-      createdDate: "2024-01-15"
-    }
-  ];
-
+  const { assignments, addAssignment } = useApp();
+  const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newAssignment, setNewAssignment] = useState({
     title: '',
     subject: '',
     description: '',
     dueDate: '',
-    attachments: [] as string[]
+    attachments: [] as string[],
+    classTargets: [] as string[]
   });
 
   const handleCreateAssignment = () => {
-    if (!newAssignment.title.trim() || !newAssignment.subject.trim() || !newAssignment.description.trim() || !newAssignment.dueDate) {
+    if (!newAssignment.title.trim() || !newAssignment.subject.trim() || 
+        !newAssignment.description.trim() || !newAssignment.dueDate || 
+        newAssignment.classTargets.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields and select at least one class.",
+        variant: "destructive"
+      });
       return;
     }
     
-    // In a real app, this would make an API call
-    console.log('Creating assignment:', newAssignment);
+    addAssignment({
+      ...newAssignment,
+      author: user?.name || 'Unknown',
+      authorRole: user?.role === 'admin' ? 'admin' : 'faculty'
+    });
+    
+    toast({
+      title: "Success",
+      description: "Assignment created successfully!",
+    });
     
     // Reset form
     setNewAssignment({
@@ -79,9 +57,28 @@ export const Assignments: React.FC = () => {
       subject: '',
       description: '',
       dueDate: '',
-      attachments: []
+      attachments: [],
+      classTargets: []
     });
     setIsCreateDialogOpen(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const fileNames = files.map(file => file.name);
+    setNewAssignment(prev => ({
+      ...prev,
+      attachments: [...prev.attachments, ...fileNames]
+    }));
+  };
+
+  const handleClassToggle = (className: string) => {
+    setNewAssignment(prev => ({
+      ...prev,
+      classTargets: prev.classTargets.includes(className)
+        ? prev.classTargets.filter(c => c !== className)
+        : [...prev.classTargets, className]
+    }));
   };
 
   return (
@@ -128,7 +125,6 @@ export const Assignments: React.FC = () => {
                     value={newAssignment.description}
                     onChange={(e) => setNewAssignment({...newAssignment, description: e.target.value})}
                   />
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="dueDate">Due Date</Label>
                   <Input
@@ -137,6 +133,45 @@ export const Assignments: React.FC = () => {
                     value={newAssignment.dueDate}
                     onChange={(e) => setNewAssignment({...newAssignment, dueDate: e.target.value})}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="classTargets">Target Classes</Label>
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="cse-a" 
+                        checked={newAssignment.classTargets.includes('CSE-A')}
+                        onCheckedChange={() => handleClassToggle('CSE-A')}
+                      />
+                      <Label htmlFor="cse-a">CSE-A</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="cse-b" 
+                        checked={newAssignment.classTargets.includes('CSE-B')}
+                        onCheckedChange={() => handleClassToggle('CSE-B')}
+                      />
+                      <Label htmlFor="cse-b">CSE-B</Label>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="attachments">Attachments</Label>
+                  <Input
+                    id="attachments"
+                    type="file"
+                    multiple
+                    onChange={handleFileUpload}
+                  />
+                  {newAssignment.attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {newAssignment.attachments.map((attachment, index) => (
+                        <Badge key={index} variant="outline">
+                          {attachment}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
@@ -164,11 +199,18 @@ export const Assignments: React.FC = () => {
                   </CardTitle>
                   <CardDescription className="flex items-center gap-2 mt-1">
                     <User className="w-4 h-4" />
-                    {assignment.instructor} • {assignment.subject}
+                    {assignment.author} • {assignment.subject}
                   </CardDescription>
                 </div>
                 <div className="text-right text-sm text-muted-foreground">
-                  <p>Created: {new Date(assignment.createdDate).toLocaleDateString()}</p>
+                  <p>Created: {new Date(assignment.timestamp).toLocaleDateString()}</p>
+                  <div className="flex gap-1 mt-1">
+                    {assignment.classTargets.map(target => (
+                      <Badge key={target} variant="secondary" className="text-xs">
+                        {target}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -203,12 +245,18 @@ export const Assignments: React.FC = () => {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">View Details</Button>
-                {user?.role === 'student' && (
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                    Download Materials
-                  </Button>
-                )}
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => toast({ title: "Preview", description: "Preview functionality will be implemented soon." })}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Preview
+                </Button>
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Materials
+                </Button>
               </div>
             </CardContent>
           </Card>

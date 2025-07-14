@@ -3,7 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Bell, 
   Search, 
@@ -13,93 +16,77 @@ import {
   AlertCircle,
   PlusCircle,
   Download,
-  Pin
+  Pin,
+  Paperclip
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface Notice {
-  id: number;
-  title: string;
-  content: string;
-  author: string;
-  department: string;
-  subject?: string;
-  category: 'general' | 'academic' | 'exam' | 'event' | 'urgent';
-  date: string;
-  pinned: boolean;
-  attachments?: string[];
-}
+import { useApp } from '@/contexts/AppContext';
+import { useToast } from '@/hooks/use-toast';
 
 export const Notices: React.FC = () => {
   const { user } = useAuth();
+  const { notices, addNotice } = useApp();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  
+  const [newNotice, setNewNotice] = useState({
+    title: '',
+    content: '',
+    subject: '',
+    category: 'general' as 'general' | 'exam' | 'urgent',
+    pinned: false,
+    attachments: [] as string[]
+  });
 
-  // Mock data - in real app this would come from API
-  const notices: Notice[] = [
-    {
-      id: 1,
-      title: 'Mid-term Examination Schedule Released',
-      content: 'The mid-term examination schedule for all courses has been finalized. Please check your respective course pages for detailed timings and venues. Make sure to carry your student ID cards and necessary stationery.',
-      author: 'Dr. Sarah Wilson',
-      department: 'Academic Office',
-      subject: 'All Subjects',
-      category: 'exam',
-      date: '2024-01-15',
-      pinned: true,
-      attachments: ['exam_schedule.pdf']
-    },
-    {
-      id: 2,
-      title: 'Library Hours Extended During Exam Period',
-      content: 'The library will remain open 24/7 during the examination period (Jan 20 - Feb 5). Additional study spaces have been arranged in the conference halls.',
-      author: 'Library Administration',
-      department: 'Library',
-      category: 'general',
-      date: '2024-01-14',
-      pinned: false
-    },
-    {
-      id: 3,
-      title: 'Guest Lecture on Artificial Intelligence and Machine Learning',
-      content: 'Join us for an exciting guest lecture by Dr. John Smith from MIT on "The Future of AI in Industry". Date: January 25, 2024, Time: 2:00 PM, Venue: Main Auditorium.',
-      author: 'Dr. Michael Brown',
-      department: 'Computer Science',
-      subject: 'Computer Science',
-      category: 'event',
-      date: '2024-01-13',
-      pinned: false
-    },
-    {
-      id: 4,
-      title: 'Data Structures Assignment Deadline Extended',
-      content: 'Due to technical issues with the submission portal, the deadline for the Data Structures assignment has been extended to January 22, 2024.',
-      author: 'Prof. Emily Davis',
-      department: 'Computer Science',
-      subject: 'Data Structures',
-      category: 'academic',
-      date: '2024-01-12',
-      pinned: false
-    },
-    {
-      id: 5,
-      title: 'Campus Network Maintenance',
-      content: 'The campus network will undergo maintenance on January 18, 2024, from 12:00 AM to 6:00 AM. Internet services may be interrupted during this period.',
-      author: 'IT Department',
-      department: 'IT Services',
-      category: 'urgent',
-      date: '2024-01-11',
-      pinned: false
+  const handleCreateNotice = () => {
+    if (!newNotice.title.trim() || !newNotice.content.trim()) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
     }
-  ];
+
+    addNotice({
+      ...newNotice,
+      author: user?.name || 'Unknown',
+      department: user?.department || 'Administration'
+    });
+
+    toast({
+      title: "Success",
+      description: "Notice posted successfully!",
+    });
+
+    setNewNotice({
+      title: '',
+      content: '',
+      subject: '',
+      category: 'general',
+      pinned: false,
+      attachments: []
+    });
+    setIsCreateModalOpen(false);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const fileNames = files.map(file => file.name);
+    setNewNotice(prev => ({
+      ...prev,
+      attachments: [...prev.attachments, ...fileNames]
+    }));
+  };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'urgent': return 'destructive';
       case 'exam': return 'default';
-      case 'academic': return 'secondary';
-      case 'event': return 'outline';
+      case 'general': return 'secondary';
       default: return 'outline';
     }
   };
@@ -140,10 +127,91 @@ export const Notices: React.FC = () => {
           <p className="text-muted-foreground">Stay updated with latest college announcements</p>
         </div>
         {canPost && (
-          <Button className="flex items-center gap-2">
-            <PlusCircle className="w-4 h-4" />
-            Post New Notice
-          </Button>
+          <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <PlusCircle className="w-4 h-4" />
+                Post New Notice
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Post New Notice</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Notice Title</Label>
+                  <Input
+                    id="title"
+                    placeholder="Enter notice title"
+                    value={newNotice.title}
+                    onChange={(e) => setNewNotice({...newNotice, title: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="content">Notice Content</Label>
+                  <Textarea
+                    id="content"
+                    placeholder="Enter notice content"
+                    rows={5}
+                    value={newNotice.content}
+                    onChange={(e) => setNewNotice({...newNotice, content: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select value={newNotice.category} onValueChange={(value: 'general' | 'exam' | 'urgent') => setNewNotice({...newNotice, category: value})}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="general">General</SelectItem>
+                        <SelectItem value="exam">Exam</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="subject">Subject (Optional)</Label>
+                    <Input
+                      id="subject"
+                      placeholder="Enter subject"
+                      value={newNotice.subject}
+                      onChange={(e) => setNewNotice({...newNotice, subject: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="attachments">Attachments</Label>
+                  <Input
+                    id="attachments"
+                    type="file"
+                    multiple
+                    onChange={handleFileUpload}
+                  />
+                  {newNotice.attachments.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {newNotice.attachments.map((attachment, index) => (
+                        <Badge key={index} variant="outline" className="flex items-center gap-1">
+                          <Paperclip className="w-3 h-3" />
+                          {attachment}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateNotice}>
+                    Post Notice
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
@@ -169,9 +237,7 @@ export const Notices: React.FC = () => {
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="general">General</SelectItem>
-                <SelectItem value="academic">Academic</SelectItem>
                 <SelectItem value="exam">Exam</SelectItem>
-                <SelectItem value="event">Events</SelectItem>
                 <SelectItem value="urgent">Urgent</SelectItem>
               </SelectContent>
             </Select>

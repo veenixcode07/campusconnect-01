@@ -17,8 +17,8 @@ export const StudentTracking: React.FC = () => {
     {
       id: 1,
       name: "Emma Thompson",
-      rollNumber: "CS2022001", 
-      class: "CS-A",
+      rollNumber: "CSE2022001", 
+      class: "CSE-A",
       attendance: 94,
       averageGrade: 8.7,
       lastActivity: "2024-01-20",
@@ -28,8 +28,8 @@ export const StudentTracking: React.FC = () => {
     {
       id: 2,
       name: "Alexander Chen",
-      rollNumber: "CS2022002",
-      class: "CS-A", 
+      rollNumber: "CSE2022002",
+      class: "CSE-A", 
       attendance: 89,
       averageGrade: 9.2,
       lastActivity: "2024-01-19",
@@ -39,8 +39,8 @@ export const StudentTracking: React.FC = () => {
     {
       id: 3,
       name: "Maria Rodriguez",
-      rollNumber: "CS2022003",
-      class: "CS-B",
+      rollNumber: "CSE2022003",
+      class: "CSE-B",
       attendance: 72,
       averageGrade: 7.1,
       lastActivity: "2024-01-18",
@@ -50,8 +50,8 @@ export const StudentTracking: React.FC = () => {
     {
       id: 4,
       name: "James Wilson",
-      rollNumber: "CS2022004",
-      class: "CS-A",
+      rollNumber: "CSE2022004",
+      class: "CSE-A",
       attendance: 63,
       averageGrade: 6.2,
       lastActivity: "2024-01-16",
@@ -61,8 +61,8 @@ export const StudentTracking: React.FC = () => {
     {
       id: 5,
       name: "Priya Patel",
-      rollNumber: "CS2022005",
-      class: "CS-B",
+      rollNumber: "CSE2022005",
+      class: "CSE-B",
       attendance: 91,
       averageGrade: 8.9,
       lastActivity: "2024-01-20",
@@ -72,8 +72,8 @@ export const StudentTracking: React.FC = () => {
     {
       id: 6,
       name: "David Kim",
-      rollNumber: "CS2022006",
-      class: "CS-C",
+      rollNumber: "CSE2022006",
+      class: "CSE-B",
       attendance: 85,
       averageGrade: 8.4,
       lastActivity: "2024-01-19",
@@ -134,9 +134,8 @@ export const StudentTracking: React.FC = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Classes</SelectItem>
-            <SelectItem value="CS-A">CS-A</SelectItem>
-            <SelectItem value="CS-B">CS-B</SelectItem>
-            <SelectItem value="CS-C">CS-C</SelectItem>
+            <SelectItem value="CSE-A">CSE-A</SelectItem>
+            <SelectItem value="CSE-B">CSE-B</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -188,7 +187,7 @@ export const StudentTracking: React.FC = () => {
                   View Profile
                 </Button>
                 <Button variant="outline" size="sm">Contact Student</Button>
-                <Button variant="outline" size="sm">Generate Report</Button>
+                <Button variant="outline" size="sm">Add Notes</Button>
               </div>
             </CardContent>
           </Card>
