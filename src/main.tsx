@@ -6,11 +6,5 @@ import { QueryProvider } from './contexts/QueryContext'
 import { AppProvider } from './contexts/AppContext'
 
 createRoot(document.getElementById("root")!).render(
-  <AuthProvider>
-    <QueryProvider>
-      <AppProvider>
-        <App />
-      </AppProvider>
-    </QueryProvider>
-  </AuthProvider>
+  <App />
 );
