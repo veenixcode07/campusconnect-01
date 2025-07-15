@@ -125,6 +125,7 @@ export const Assignments: React.FC = () => {
                     value={newAssignment.description}
                     onChange={(e) => setNewAssignment({...newAssignment, description: e.target.value})}
                   />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="dueDate">Due Date</Label>
                   <Input
