@@ -246,14 +246,59 @@ export const Assignments: React.FC = () => {
               </div>
 
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => toast({ title: "Preview", description: "Preview functionality will be implemented soon." })}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Preview
-                </Button>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Eye className="w-4 h-4 mr-2" />
+                      Preview
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Assignment Preview</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold">{assignment.title}</h3>
+                        <div className="flex gap-4 text-sm text-muted-foreground">
+                          <span>Subject: {assignment.subject}</span>
+                          <span>Due: {new Date(assignment.dueDate).toLocaleDateString()}</span>
+                          <span>Author: {assignment.author}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Description</h4>
+                        <p className="text-sm leading-relaxed">{assignment.description}</p>
+                      </div>
+                      
+                      {assignment.attachments && assignment.attachments.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Attachments</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {assignment.attachments.map((attachment, index) => (
+                              <Badge key={index} variant="outline" className="flex items-center gap-1">
+                                <Paperclip className="w-3 h-3" />
+                                {attachment}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {assignment.classTargets && assignment.classTargets.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Target Classes</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {assignment.classTargets.map((target, index) => (
+                              <Badge key={index} variant="secondary">{target}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
                 <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                   <Download className="w-4 h-4 mr-2" />
                   Download Materials

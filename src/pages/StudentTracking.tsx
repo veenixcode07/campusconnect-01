@@ -4,14 +4,26 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, User, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Search, User, TrendingUp, TrendingDown, AlertTriangle, FileText } from 'lucide-react';
 import { StudentProfileModal } from '@/components/StudentProfileModal';
+import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 export const StudentTracking: React.FC = () => {
+  const { addStudentNote, getStudentNotes } = useApp();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterClass, setFilterClass] = useState('all');
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isAddNotesModalOpen, setIsAddNotesModalOpen] = useState(false);
+  const [studentForNotes, setStudentForNotes] = useState<any>(null);
+  const [noteContent, setNoteContent] = useState('');
 
   const students = [
     {
@@ -85,6 +97,37 @@ export const StudentTracking: React.FC = () => {
   const handleViewProfile = (student: any) => {
     setSelectedStudent(student);
     setIsProfileModalOpen(true);
+  };
+
+  const handleAddNotes = (student: any) => {
+    setStudentForNotes(student);
+    setIsAddNotesModalOpen(true);
+  };
+
+  const handleSaveNote = () => {
+    if (!noteContent.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a note before saving.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    addStudentNote({
+      studentId: studentForNotes.id.toString(),
+      note: noteContent,
+      author: user?.name || 'Unknown Faculty'
+    });
+
+    toast({
+      title: "Success",
+      description: "Note added successfully!",
+    });
+
+    setNoteContent('');
+    setIsAddNotesModalOpen(false);
+    setStudentForNotes(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -187,7 +230,14 @@ export const StudentTracking: React.FC = () => {
                   View Profile
                 </Button>
                 <Button variant="outline" size="sm">Contact Student</Button>
-                <Button variant="outline" size="sm">Add Notes</Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleAddNotes(student)}
+                >
+                  <FileText className="w-4 h-4 mr-1" />
+                  Add Notes
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -205,6 +255,66 @@ export const StudentTracking: React.FC = () => {
           }}
         />
       )}
+
+      {/* Add Notes Modal */}
+      <Dialog open={isAddNotesModalOpen} onOpenChange={setIsAddNotesModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add Notes for {studentForNotes?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="studentInfo">Student Information</Label>
+              <div className="text-sm text-muted-foreground">
+                <p><strong>Name:</strong> {studentForNotes?.name}</p>
+                <p><strong>Roll Number:</strong> {studentForNotes?.rollNumber}</p>
+                <p><strong>Class:</strong> {studentForNotes?.class}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="noteContent">Note Content</Label>
+              <Textarea
+                id="noteContent"
+                placeholder="Enter your note about the student..."
+                rows={6}
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+              />
+            </div>
+
+            {/* Previous Notes */}
+            {studentForNotes && (
+              <div className="space-y-2">
+                <Label>Previous Notes</Label>
+                <div className="max-h-32 overflow-y-auto space-y-2">
+                  {getStudentNotes(studentForNotes.id.toString()).length > 0 ? (
+                    getStudentNotes(studentForNotes.id.toString()).map((note) => (
+                      <div key={note.id} className="p-2 bg-muted rounded-md">
+                        <div className="text-sm text-muted-foreground mb-1">
+                          {note.author} - {new Date(note.timestamp).toLocaleString()}
+                        </div>
+                        <div className="text-sm">{note.note}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No previous notes</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsAddNotesModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveNote}>
+                Save Note
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

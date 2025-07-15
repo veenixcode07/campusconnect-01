@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 export interface Assignment {
   id: string;
@@ -23,6 +23,7 @@ export interface Notice {
   category: 'general' | 'exam' | 'urgent';
   date: string;
   pinned: boolean;
+  pinnedUntil?: Date;
   attachments: string[];
 }
 
@@ -59,6 +60,8 @@ interface AppContextType {
   toggleResourceFavorite: (resourceId: string) => void;
   addStudentNote: (note: Omit<StudentNote, 'id' | 'timestamp'>) => void;
   getStudentNotes: (studentId: string) => StudentNote[];
+  pinNotice: (noticeId: string, pinUntil: Date) => void;
+  unpinNotice: (noticeId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -192,11 +195,35 @@ const initialResources: Resource[] = [
   }
 ];
 
+const initialStudentNotes: StudentNote[] = [
+  {
+    id: '1',
+    studentId: '1',
+    note: 'Excellent performance in recent assignments. Shows strong understanding of binary trees and algorithms.',
+    author: 'Dr. Sarah Wilson',
+    timestamp: '2024-01-15T10:30:00Z'
+  },
+  {
+    id: '2',
+    studentId: '3',
+    note: 'Student needs additional support in understanding complex data structures. Recommended for tutoring sessions.',
+    author: 'Dr. Sarah Wilson',
+    timestamp: '2024-01-14T14:15:00Z'
+  },
+  {
+    id: '3',
+    studentId: '4',
+    note: 'Missing several assignments. Contacted student about make-up work. Needs immediate attention.',
+    author: 'Prof. Michael Brown',
+    timestamp: '2024-01-13T09:45:00Z'
+  }
+];
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [assignments, setAssignments] = useState<Assignment[]>(initialAssignments);
   const [notices, setNotices] = useState<Notice[]>(initialNotices);
   const [resources, setResources] = useState<Resource[]>(initialResources);
-  const [studentNotes, setStudentNotes] = useState<StudentNote[]>([]);
+  const [studentNotes, setStudentNotes] = useState<StudentNote[]>(initialStudentNotes);
 
   const addAssignment = (newAssignment: Omit<Assignment, 'id' | 'timestamp'>) => {
     const assignment: Assignment = {
@@ -237,6 +264,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return studentNotes.filter(note => note.studentId === studentId);
   };
 
+  const pinNotice = (noticeId: string, pinUntil: Date) => {
+    setNotices(prev => prev.map(notice => 
+      notice.id === noticeId 
+        ? { ...notice, pinned: true, pinnedUntil: pinUntil }
+        : notice
+    ));
+  };
+
+  const unpinNotice = (noticeId: string) => {
+    setNotices(prev => prev.map(notice => 
+      notice.id === noticeId 
+        ? { ...notice, pinned: false, pinnedUntil: undefined }
+        : notice
+    ));
+  };
+
+  // Auto-unpin expired notices
+  useEffect(() => {
+    const checkExpiredPins = () => {
+      const now = new Date();
+      setNotices(prev => prev.map(notice => {
+        if (notice.pinned && notice.pinnedUntil && now >= notice.pinnedUntil) {
+          return { ...notice, pinned: false, pinnedUntil: undefined };
+        }
+        return notice;
+      }));
+    };
+
+    const interval = setInterval(checkExpiredPins, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <AppContext.Provider value={{
       assignments,
@@ -247,7 +306,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addNotice,
       toggleResourceFavorite,
       addStudentNote,
-      getStudentNotes
+      getStudentNotes,
+      pinNotice,
+      unpinNotice
     }}>
       {children}
     </AppContext.Provider>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   BookOpen, 
   Search, 
@@ -29,6 +30,7 @@ export const Resources: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedFavorite, setSelectedFavorite] = useState<string>('all');
   const [showFavorites, setShowFavorites] = useState(false);
 
   const getFileIcon = (type: string) => {
@@ -61,11 +63,9 @@ export const Resources: React.FC = () => {
     });
   };
 
-  const handlePreview = (resourceTitle: string) => {
-    toast({
-      title: "Preview",
-      description: `Preview for "${resourceTitle}" will be available soon.`,
-    });
+  const handlePreview = (resource: any) => {
+    // This would open a preview dialog with the resource content
+    return resource;
   };
 
   const filteredResources = resources.filter(resource => {
@@ -227,14 +227,73 @@ export const Resources: React.FC = () => {
                     <Download className="w-4 h-4 mr-2" />
                     Download
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handlePreview(resource.title)}
-                  >
-                    <Eye className="w-4 h-4 mr-2" />
-                    Preview
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Resource Preview</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <h3 className="text-lg font-semibold">{resource.title}</h3>
+                          <div className="flex gap-4 text-sm text-muted-foreground">
+                            <span>Type: {resource.type.toUpperCase()}</span>
+                            <span>Subject: {resource.subject}</span>
+                            <span>Size: {resource.size}</span>
+                            <span>Uploaded by: {resource.uploadedBy}</span>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Description</h4>
+                          <p className="text-sm leading-relaxed">{resource.description}</p>
+                        </div>
+                        
+                        {resource.tags && resource.tags.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="font-medium">Tags</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {resource.tags.map((tag, index) => (
+                                <Badge key={index} variant="outline">{tag}</Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <h4 className="font-medium">Statistics</h4>
+                          <div className="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                              <div className="text-2xl font-bold text-primary">{resource.downloads}</div>
+                              <div className="text-sm text-muted-foreground">Downloads</div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold text-primary">{resource.likes}</div>
+                              <div className="text-sm text-muted-foreground">Likes</div>
+                            </div>
+                            <div>
+                              <div className="text-2xl font-bold text-primary">{new Date(resource.uploadDate).toLocaleDateString()}</div>
+                              <div className="text-sm text-muted-foreground">Upload Date</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-muted p-4 rounded-lg">
+                          <p className="text-sm text-muted-foreground text-center">
+                            {resource.type === 'video' ? 'Video preview would appear here' :
+                             resource.type === 'pdf' ? 'PDF preview would appear here' :
+                             resource.type === 'image' ? 'Image preview would appear here' :
+                             'File preview would appear here'}
+                          </p>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <Button 
                     variant="outline" 
                     size="sm"

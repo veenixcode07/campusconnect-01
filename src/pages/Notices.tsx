@@ -25,12 +25,15 @@ import { useToast } from '@/hooks/use-toast';
 
 export const Notices: React.FC = () => {
   const { user } = useAuth();
-  const { notices, addNotice } = useApp();
+  const { notices, addNotice, pinNotice, unpinNotice } = useApp();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [selectedNoticeForPin, setSelectedNoticeForPin] = useState<any>(null);
+  const [pinDuration, setPinDuration] = useState('1'); // hours
   
   const [newNotice, setNewNotice] = useState({
     title: '',
@@ -80,6 +83,46 @@ export const Notices: React.FC = () => {
       ...prev,
       attachments: [...prev.attachments, ...fileNames]
     }));
+  };
+
+  const handlePinNotice = (notice: any) => {
+    if (user?.role !== 'faculty' && user?.role !== 'admin') {
+      toast({
+        title: "Access Denied",
+        description: "Only faculty members can pin notices.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setSelectedNoticeForPin(notice);
+    setIsPinModalOpen(true);
+  };
+
+  const handleConfirmPin = () => {
+    if (selectedNoticeForPin) {
+      const hours = parseInt(pinDuration);
+      const pinUntil = new Date(Date.now() + hours * 60 * 60 * 1000);
+      
+      pinNotice(selectedNoticeForPin.id, pinUntil);
+      
+      toast({
+        title: "Success",
+        description: `Notice pinned for ${hours} hour(s)`,
+      });
+      
+      setIsPinModalOpen(false);
+      setSelectedNoticeForPin(null);
+      setPinDuration('1');
+    }
+  };
+
+  const handleUnpinNotice = (noticeId: string) => {
+    unpinNotice(noticeId);
+    toast({
+      title: "Success",
+      description: "Notice unpinned successfully",
+    });
   };
 
   const getCategoryColor = (category: string) => {
@@ -304,6 +347,15 @@ export const Notices: React.FC = () => {
                       {getCategoryIcon(notice.category)}
                       {notice.category}
                     </Badge>
+                    {(user?.role === 'faculty' || user?.role === 'admin') && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => notice.pinned ? handleUnpinNotice(notice.id) : handlePinNotice(notice)}
+                      >
+                        <Pin className={`w-4 h-4 ${notice.pinned ? 'text-primary' : 'text-muted-foreground'}`} />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -325,6 +377,43 @@ export const Notices: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Pin Notice Modal */}
+      <Dialog open={isPinModalOpen} onOpenChange={setIsPinModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Pin Notice</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm">Pin "{selectedNoticeForPin?.title}" for:</p>
+              <Select value={pinDuration} onValueChange={setPinDuration}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 hour</SelectItem>
+                  <SelectItem value="3">3 hours</SelectItem>
+                  <SelectItem value="6">6 hours</SelectItem>
+                  <SelectItem value="12">12 hours</SelectItem>
+                  <SelectItem value="24">24 hours</SelectItem>
+                  <SelectItem value="48">48 hours</SelectItem>
+                  <SelectItem value="72">72 hours</SelectItem>
+                  <SelectItem value="168">1 week</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsPinModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmPin}>
+                Pin Notice
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
