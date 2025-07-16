@@ -37,8 +37,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user }) => {
   ];
 
   const upcomingAssignments = [
-    { id: 1, subject: 'Data Structures', title: 'Binary Tree Implementation', dueDate: '2024-01-20', status: 'pending' },
-    { id: 2, subject: 'Operating Systems', title: 'Process Scheduling Report', dueDate: '2024-01-18', status: 'in-progress' },
+    { id: 1, subject: 'Data Structures', title: 'Binary Tree Implementation', dueDate: '2024-01-20' },
+    { id: 2, subject: 'Operating Systems', title: 'Process Scheduling Report', dueDate: '2024-01-18' },
   ];
 
   const pendingQueries = [
@@ -196,9 +196,6 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user }) => {
                   <p className="text-xs text-muted-foreground">{assignment.subject}</p>
                   <p className="text-xs text-muted-foreground">Due: {assignment.dueDate}</p>
                 </div>
-                <Badge variant={assignment.status === 'pending' ? 'destructive' : 'secondary'}>
-                  {assignment.status}
-                </Badge>
               </div>
             ))}
             <Button asChild variant="outline" className="w-full">

@@ -288,8 +288,8 @@ export const StudentTracking: React.FC = () => {
               <div className="space-y-2">
                 <Label>Previous Notes</Label>
                 <div className="max-h-32 overflow-y-auto space-y-2">
-                  {getStudentNotes(studentForNotes.id.toString()).length > 0 ? (
-                    getStudentNotes(studentForNotes.id.toString()).map((note) => (
+                  {getStudentNotes(studentForNotes.id.toString(), user?.name).length > 0 ? (
+                    getStudentNotes(studentForNotes.id.toString(), user?.name).map((note) => (
                       <div key={note.id} className="p-2 bg-muted rounded-md">
                         <div className="text-sm text-muted-foreground mb-1">
                           {note.author} - {new Date(note.timestamp).toLocaleString()}

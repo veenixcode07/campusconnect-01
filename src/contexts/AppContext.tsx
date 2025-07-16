@@ -59,7 +59,7 @@ interface AppContextType {
   addNotice: (notice: Omit<Notice, 'id' | 'date'>) => void;
   toggleResourceFavorite: (resourceId: string) => void;
   addStudentNote: (note: Omit<StudentNote, 'id' | 'timestamp'>) => void;
-  getStudentNotes: (studentId: string) => StudentNote[];
+  getStudentNotes: (studentId: string, facultyName?: string) => StudentNote[];
   pinNotice: (noticeId: string, pinUntil: Date) => void;
   unpinNotice: (noticeId: string) => void;
 }
@@ -260,8 +260,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setStudentNotes(prev => [note, ...prev]);
   };
 
-  const getStudentNotes = (studentId: string) => {
-    return studentNotes.filter(note => note.studentId === studentId);
+  const getStudentNotes = (studentId: string, facultyName?: string) => {
+    let notes = studentNotes.filter(note => note.studentId === studentId);
+    if (facultyName) {
+      notes = notes.filter(note => note.author === facultyName);
+    }
+    return notes;
   };
 
   const pinNotice = (noticeId: string, pinUntil: Date) => {

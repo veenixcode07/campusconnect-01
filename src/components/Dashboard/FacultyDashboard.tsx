@@ -34,24 +34,21 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ user }) => {
       student: 'John Doe', 
       subject: 'Data Structures', 
       question: 'Can you explain the difference between arrays and linked lists?',
-      time: '2 hours ago',
-      urgent: false
+      time: '2 hours ago'
     },
     { 
       id: 2, 
       student: 'Jane Smith', 
       subject: 'Operating Systems', 
       question: 'How does process scheduling work in real-time systems?',
-      time: '4 hours ago',
-      urgent: true
+      time: '4 hours ago'
     },
     { 
       id: 3, 
       student: 'Mike Johnson', 
       subject: 'Computer Networks', 
       question: 'What is the purpose of the OSI model?',
-      time: '1 day ago',
-      urgent: false
+      time: '1 day ago'
     },
   ];
 
@@ -64,7 +61,7 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ user }) => {
   const recentActivity = [
     { id: 1, type: 'query_answered', content: 'Answered query about binary search trees', time: '3 hours ago' },
     { id: 2, type: 'assignment_posted', content: 'Posted new assignment for OS course', time: '1 day ago' },
-    { id: 3, type: 'student_tracked', content: 'Updated progress notes for 5 students', time: '2 days ago' },
+    { id: 3, type: 'resource_uploaded', content: 'Uploaded new study materials', time: '2 days ago' },
   ];
 
   const classSchedule = [
@@ -178,11 +175,6 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ user }) => {
                     <p className="text-sm font-medium">{query.student}</p>
                     <p className="text-xs text-muted-foreground">{query.subject} • {query.time}</p>
                   </div>
-                  {query.urgent && (
-                    <Badge variant="destructive" className="text-xs">
-                      Urgent
-                    </Badge>
-                  )}
                 </div>
                 <p className="text-sm text-gray-700">{query.question}</p>
               </div>
@@ -236,7 +228,7 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ user }) => {
                 }`}>
                   {activity.type === 'query_answered' && <MessageSquare className="w-3 h-3 text-blue-600" />}
                   {activity.type === 'assignment_posted' && <ClipboardList className="w-3 h-3 text-green-600" />}
-                  {activity.type === 'student_tracked' && <Users className="w-3 h-3 text-purple-600" />}
+                  {activity.type === 'resource_uploaded' && <BookOpen className="w-3 h-3 text-purple-600" />}
                 </div>
                 <div className="flex-1">
                   <p className="text-sm">{activity.content}</p>
@@ -244,9 +236,6 @@ export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ user }) => {
                 </div>
               </div>
             ))}
-            <Button asChild variant="outline" className="w-full">
-              <Link to="/tracking">Student Tracking</Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
