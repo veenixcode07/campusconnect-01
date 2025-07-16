@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { MessageSquare, ThumbsUp, Search, Plus, User, CheckCircle, Send } from 'lucide-react';
+import { MessageSquare, ThumbsUp, Search, Plus, User, CheckCircle, Send, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const QueryForum: React.FC = () => {
   const { user } = useAuth();
-  const { queries, addQuery, addAnswer, likeQuery, markAnswerAsAccepted } = useQuery();
+  const { queries, addQuery, addAnswer, likeQuery, markAnswerAsAccepted, deleteQuery } = useQuery();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
@@ -97,6 +97,14 @@ export const QueryForum: React.FC = () => {
     });
   };
 
+  const handleDeleteQuery = (queryId: string) => {
+    deleteQuery(queryId);
+    toast({
+      title: "Success",
+      description: "Query deleted successfully!"
+    });
+  };
+
   const selectedQueryData = selectedQuery ? queries.find(q => q.id === selectedQuery) : null;
 
   return (
@@ -165,12 +173,22 @@ export const QueryForum: React.FC = () => {
                       <Badge className="bg-green-500 text-white">Solved</Badge>
                     )}
                   </CardTitle>
-                  <CardDescription className="flex items-center gap-2 mt-2">
-                    <User className="w-4 h-4" />
-                    {query.author} • {query.subject} • {new Date(query.timestamp).toLocaleDateString()}
-                  </CardDescription>
+                    <CardDescription className="flex items-center gap-2 mt-2">
+                      <User className="w-4 h-4" />
+                      {query.author} • {query.subject} • {new Date(query.timestamp).toLocaleDateString()}
+                    </CardDescription>
+                  </div>
+                  {user?.name === query.author && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDeleteQuery(query.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
-              </div>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground mb-4">{query.content}</p>

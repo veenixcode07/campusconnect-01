@@ -14,43 +14,32 @@ import {
 } from 'lucide-react';
 import { User } from '@/types/auth';
 import { Link } from 'react-router-dom';
+import { useApp } from '@/contexts/AppContext';
+import { useQuery } from '@/contexts/QueryContext';
 
 interface FacultyDashboardProps {
   user: User;
 }
 
 export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ user }) => {
+  const { assignments } = useApp();
+  const { queries } = useQuery();
+
   // Mock data - in real app this would come from API
   const stats = {
     totalStudents: 89,
-    pendingQueries: 7,
-    assignmentsPosted: 12,
+    pendingQueries: queries.filter(q => !q.solved).length,
+    assignmentsPosted: assignments.filter(a => a.author === user.name).length,
     averageAttendance: 82,
   };
 
-  const pendingQueries = [
-    { 
-      id: 1, 
-      student: 'John Doe', 
-      subject: 'Data Structures', 
-      question: 'Can you explain the difference between arrays and linked lists?',
-      time: '2 hours ago'
-    },
-    { 
-      id: 2, 
-      student: 'Jane Smith', 
-      subject: 'Operating Systems', 
-      question: 'How does process scheduling work in real-time systems?',
-      time: '4 hours ago'
-    },
-    { 
-      id: 3, 
-      student: 'Mike Johnson', 
-      subject: 'Computer Networks', 
-      question: 'What is the purpose of the OSI model?',
-      time: '1 day ago'
-    },
-  ];
+  const pendingQueries = queries.filter(q => !q.solved).slice(0, 3).map(query => ({
+    id: query.id,
+    student: query.author,
+    subject: query.subject,
+    question: query.title,
+    time: new Date(query.timestamp).toLocaleString()
+  }));
 
   const upcomingDeadlines = [
     { id: 1, type: 'assignment', title: 'Algorithm Analysis Report', dueDate: '2024-01-20', subject: 'Data Structures' },

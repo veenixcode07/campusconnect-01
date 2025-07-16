@@ -14,12 +14,17 @@ import {
 } from 'lucide-react';
 import { User } from '@/types/auth';
 import { Link } from 'react-router-dom';
+import { useApp } from '@/contexts/AppContext';
+import { useQuery } from '@/contexts/QueryContext';
 
 interface StudentDashboardProps {
   user: User;
 }
 
 export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user }) => {
+  const { assignments, notices, resources } = useApp();
+  const { queries } = useQuery();
+
   // Mock data - in real app this would come from API
   const attendanceData = {
     overall: 85,
@@ -30,21 +35,26 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user }) => {
     ]
   };
 
-  const recentNotices = [
-    { id: 1, title: 'Mid-term Exam Schedule Released', date: '2024-01-15', urgent: true },
-    { id: 2, title: 'Library Hours Extended', date: '2024-01-14', urgent: false },
-    { id: 3, title: 'Guest Lecture on AI/ML', date: '2024-01-13', urgent: false },
-  ];
+  const recentNotices = notices.slice(0, 3).map(notice => ({
+    id: notice.id,
+    title: notice.title,
+    date: notice.date,
+    urgent: notice.category === 'urgent'
+  }));
 
-  const upcomingAssignments = [
-    { id: 1, subject: 'Data Structures', title: 'Binary Tree Implementation', dueDate: '2024-01-20' },
-    { id: 2, subject: 'Operating Systems', title: 'Process Scheduling Report', dueDate: '2024-01-18' },
-  ];
+  const upcomingAssignments = assignments.slice(0, 2).map(assignment => ({
+    id: assignment.id,
+    subject: assignment.subject,
+    title: assignment.title,
+    dueDate: assignment.dueDate
+  }));
 
-  const pendingQueries = [
-    { id: 1, subject: 'Computer Networks', question: 'Difference between TCP and UDP?', status: 'answered' },
-    { id: 2, subject: 'Data Structures', question: 'Time complexity of heap operations', status: 'pending' },
-  ];
+  const pendingQueries = queries.filter(query => query.author === user.name).slice(0, 2).map(query => ({
+    id: query.id,
+    subject: query.subject,
+    question: query.title,
+    status: query.solved ? 'answered' : 'pending'
+  }));
 
   return (
     <div className="space-y-6">
@@ -76,8 +86,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user }) => {
               <CheckCircle className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Assignments Done</p>
-              <p className="text-xl font-bold">8/10</p>
+               <p className="text-sm text-muted-foreground">Total Assignments</p>
+               <p className="text-xl font-bold">{assignments.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -88,8 +98,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user }) => {
               <Clock className="w-5 h-5 text-orange-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Pending Queries</p>
-              <p className="text-xl font-bold">1</p>
+               <p className="text-sm text-muted-foreground">Pending Queries</p>
+               <p className="text-xl font-bold">{queries.filter(q => q.author === user.name && !q.solved).length}</p>
             </div>
           </CardContent>
         </Card>
@@ -100,8 +110,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ user }) => {
               <BookOpen className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Resources Available</p>
-              <p className="text-xl font-bold">24</p>
+               <p className="text-sm text-muted-foreground">Resources Available</p>
+               <p className="text-xl font-bold">{resources.length}</p>
             </div>
           </CardContent>
         </Card>

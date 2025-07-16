@@ -29,6 +29,7 @@ interface QueryContextType {
   addAnswer: (queryId: string, answer: Omit<Answer, 'id' | 'timestamp'>) => void;
   likeQuery: (queryId: string, userId: string) => void;
   markAnswerAsAccepted: (queryId: string, answerId: string) => void;
+  deleteQuery: (queryId: string) => void;
 }
 
 const QueryContext = createContext<QueryContextType | undefined>(undefined);
@@ -248,13 +249,18 @@ export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }));
   };
 
+  const deleteQuery = (queryId: string) => {
+    setQueries(prev => prev.filter(query => query.id !== queryId));
+  };
+
   return (
     <QueryContext.Provider value={{
       queries,
       addQuery,
       addAnswer,
       likeQuery,
-      markAnswerAsAccepted
+      markAnswerAsAccepted,
+      deleteQuery
     }}>
       {children}
     </QueryContext.Provider>

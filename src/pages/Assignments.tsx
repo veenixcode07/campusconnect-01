@@ -4,7 +4,7 @@ import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Clock, FileText, Plus, Paperclip, User, Download, Eye } from 'lucide-react';
+import { CalendarDays, Clock, FileText, Plus, Paperclip, User, Download, Eye, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const Assignments: React.FC = () => {
   const { user } = useAuth();
-  const { assignments, addAssignment } = useApp();
+  const { assignments, addAssignment, deleteAssignment } = useApp();
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newAssignment, setNewAssignment] = useState({
@@ -79,6 +79,14 @@ export const Assignments: React.FC = () => {
         ? prev.classTargets.filter(c => c !== className)
         : [...prev.classTargets, className]
     }));
+  };
+
+  const handleDeleteAssignment = (assignmentId: string) => {
+    deleteAssignment(assignmentId);
+    toast({
+      title: "Success",
+      description: "Assignment deleted successfully!",
+    });
   };
 
   return (
@@ -213,6 +221,16 @@ export const Assignments: React.FC = () => {
                     ))}
                   </div>
                 </div>
+                {user?.name === assignment.author && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleDeleteAssignment(assignment.id)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent>

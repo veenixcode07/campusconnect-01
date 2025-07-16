@@ -62,6 +62,8 @@ interface AppContextType {
   getStudentNotes: (studentId: string, facultyName?: string) => StudentNote[];
   pinNotice: (noticeId: string, pinUntil: Date) => void;
   unpinNotice: (noticeId: string) => void;
+  deleteAssignment: (assignmentId: string) => void;
+  deleteResource: (resourceId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -284,6 +286,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     ));
   };
 
+  const deleteAssignment = (assignmentId: string) => {
+    setAssignments(prev => prev.filter(assignment => assignment.id !== assignmentId));
+  };
+
+  const deleteResource = (resourceId: string) => {
+    setResources(prev => prev.filter(resource => resource.id !== resourceId));
+  };
+
   // Auto-unpin expired notices
   useEffect(() => {
     const checkExpiredPins = () => {
@@ -312,7 +322,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addStudentNote,
       getStudentNotes,
       pinNotice,
-      unpinNotice
+      unpinNotice,
+      deleteAssignment,
+      deleteResource
     }}>
       {children}
     </AppContext.Provider>

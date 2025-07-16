@@ -17,7 +17,8 @@ import {
   User,
   PlusCircle,
   Eye,
-  Heart
+  Heart,
+  Trash2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
@@ -25,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const Resources: React.FC = () => {
   const { user } = useAuth();
-  const { resources, toggleResourceFavorite } = useApp();
+  const { resources, toggleResourceFavorite, deleteResource } = useApp();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
@@ -60,6 +61,14 @@ export const Resources: React.FC = () => {
     toast({
       title: "Success",
       description: "Resource favorite status updated!",
+    });
+  };
+
+  const handleDeleteResource = (resourceId: string) => {
+    deleteResource(resourceId);
+    toast({
+      title: "Success",
+      description: "Resource deleted successfully!",
     });
   };
 
@@ -175,6 +184,16 @@ export const Resources: React.FC = () => {
                       {resource.description}
                     </CardDescription>
                   </div>
+                  {user?.name === resource.uploadedBy && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDeleteResource(resource.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
