@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { supabase, Notice as SupabaseNotice, Assignment as SupabaseAssignment, Resource as SupabaseResource, StudentNote as SupabaseStudentNote } from '@/lib/supabase';
+import { useAuth } from './AuthContext';
 
 export interface Assignment {
   id: string;
@@ -76,173 +78,219 @@ export const useApp = () => {
   return context;
 };
 
-const initialAssignments: Assignment[] = [
-  {
-    id: '1',
-    title: 'Binary Tree Implementation',
-    description: 'Implement a binary search tree with insert, delete, and search operations. Include proper traversal methods (inorder, preorder, postorder) and balance checking functionality.',
-    subject: 'Data Structures',
-    dueDate: '2024-01-25',
-    author: 'Dr. Sarah Wilson',
-    authorRole: 'faculty',
-    timestamp: '2024-01-15T10:00:00Z',
-    attachments: ['bst_requirements.pdf', 'test_cases.txt'],
-    classTargets: ['CSE-A', 'CSE-B']
-  },
-  {
-    id: '2',
-    title: 'Process Scheduling Algorithms',
-    description: 'Compare and implement three different process scheduling algorithms: FCFS, SJF, and Round Robin. Analyze their performance with different workloads.',
-    subject: 'Operating Systems',
-    dueDate: '2024-01-30',
-    author: 'Prof. Michael Brown',
-    authorRole: 'faculty',
-    timestamp: '2024-01-16T14:30:00Z',
-    attachments: ['scheduling_template.docx'],
-    classTargets: ['CSE-A', 'CSE-B']
-  },
-  {
-    id: '3',
-    title: 'Network Protocol Analysis',
-    description: 'Analyze the TCP/IP protocol stack using Wireshark. Capture and examine network packets to understand protocol behavior in different scenarios.',
-    subject: 'Computer Networks',
-    dueDate: '2024-02-05',
-    author: 'Dr. Emily Davis',
-    authorRole: 'faculty',
-    timestamp: '2024-01-17T09:15:00Z',
-    attachments: ['wireshark_guide.pdf', 'sample_captures.pcap'],
-    classTargets: ['CSE-A']
-  }
-];
-
-const initialNotices: Notice[] = [
-  {
-    id: '1',
-    title: 'Mid-term Examination Schedule Released',
-    content: 'The mid-term examination schedule for all courses has been finalized. Please check your respective course pages for detailed timings and venues.',
-    author: 'Dr. Sarah Wilson',
-    department: 'Academic Office',
-    subject: 'All Subjects',
-    category: 'exam',
-    date: '2024-01-15',
-    pinned: true,
-    attachments: ['exam_schedule.pdf']
-  },
-  {
-    id: '2',
-    title: 'Library Hours Extended During Exam Period',
-    content: 'The library will remain open 24/7 during the examination period (Jan 20 - Feb 5). Additional study spaces have been arranged.',
-    author: 'Library Administration',
-    department: 'Library',
-    category: 'general',
-    date: '2024-01-14',
-    pinned: false,
-    attachments: []
-  },
-  {
-    id: '3',
-    title: 'Campus Network Maintenance',
-    content: 'The campus network will undergo maintenance on January 18, 2024, from 12:00 AM to 6:00 AM. Internet services may be interrupted.',
-    author: 'IT Department',
-    department: 'IT Services',
-    category: 'urgent',
-    date: '2024-01-11',
-    pinned: false,
-    attachments: []
-  }
-];
-
-const initialResources: Resource[] = [
-  {
-    id: '1',
-    title: 'Data Structures - Binary Trees Complete Guide',
-    description: 'Comprehensive guide covering binary trees, BST, AVL trees, and operations with examples.',
-    type: 'pdf',
-    subject: 'Data Structures',
-    uploadedBy: 'Dr. Sarah Wilson',
-    uploadDate: '2024-01-15',
-    size: '2.4 MB',
-    downloads: 156,
-    likes: 23,
-    tags: ['binary-trees', 'bst', 'algorithms'],
-    favorited: false
-  },
-  {
-    id: '2',
-    title: 'Operating Systems - Process Scheduling Presentation',
-    description: 'Detailed presentation on various process scheduling algorithms including FCFS, SJF, Round Robin.',
-    type: 'ppt',
-    subject: 'Operating Systems',
-    uploadedBy: 'Prof. Michael Brown',
-    uploadDate: '2024-01-14',
-    size: '5.1 MB',
-    downloads: 134,
-    likes: 19,
-    tags: ['scheduling', 'processes', 'algorithms'],
-    favorited: false
-  },
-  {
-    id: '3',
-    title: 'Computer Networks - OSI Model Explained',
-    description: 'Video lecture explaining the 7 layers of OSI model with real-world examples.',
-    type: 'video',
-    subject: 'Computer Networks',
-    uploadedBy: 'Dr. Emily Davis',
-    uploadDate: '2024-01-13',
-    size: '45.2 MB',
-    downloads: 89,
-    likes: 15,
-    tags: ['osi-model', 'networking', 'protocols'],
-    favorited: true
-  }
-];
-
-const initialStudentNotes: StudentNote[] = [
-  {
-    id: '1',
-    studentId: '1',
-    note: 'Excellent performance in recent assignments. Shows strong understanding of binary trees and algorithms.',
-    author: 'Dr. Sarah Wilson',
-    timestamp: '2024-01-15T10:30:00Z'
-  },
-  {
-    id: '2',
-    studentId: '3',
-    note: 'Student needs additional support in understanding complex data structures. Recommended for tutoring sessions.',
-    author: 'Dr. Sarah Wilson',
-    timestamp: '2024-01-14T14:15:00Z'
-  },
-  {
-    id: '3',
-    studentId: '4',
-    note: 'Missing several assignments. Contacted student about make-up work. Needs immediate attention.',
-    author: 'Prof. Michael Brown',
-    timestamp: '2024-01-13T09:45:00Z'
-  }
-];
-
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [assignments, setAssignments] = useState<Assignment[]>(initialAssignments);
-  const [notices, setNotices] = useState<Notice[]>(initialNotices);
-  const [resources, setResources] = useState<Resource[]>(initialResources);
-  const [studentNotes, setStudentNotes] = useState<StudentNote[]>(initialStudentNotes);
+  const { user } = useAuth();
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [studentNotes, setStudentNotes] = useState<StudentNote[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const addAssignment = (newAssignment: Omit<Assignment, 'id' | 'timestamp'>) => {
-    const assignment: Assignment = {
-      ...newAssignment,
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString()
-    };
-    setAssignments(prev => [assignment, ...prev]);
+  // Load data when user is authenticated
+  useEffect(() => {
+    if (user) {
+      loadAllData();
+    }
+  }, [user]);
+
+  const loadAllData = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        loadAssignments(),
+        loadNotices(),
+        loadResources(),
+        loadStudentNotes()
+      ]);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const addNotice = (newNotice: Omit<Notice, 'id' | 'date'>) => {
-    const notice: Notice = {
-      ...newNotice,
-      id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0]
-    };
-    setNotices(prev => [notice, ...prev]);
+  const loadAssignments = async () => {
+    const { data, error } = await supabase
+      .from('assignments')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading assignments:', error);
+      return;
+    }
+
+    const mappedAssignments: Assignment[] = data.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      subject: item.subject,
+      dueDate: item.due_date,
+      author: item.author,
+      authorRole: item.author_role,
+      timestamp: item.created_at,
+      attachments: item.attachments || [],
+      classTargets: item.class_targets || []
+    }));
+
+    setAssignments(mappedAssignments);
+  };
+
+  const loadNotices = async () => {
+    const { data, error } = await supabase
+      .from('notices')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading notices:', error);
+      return;
+    }
+
+    const mappedNotices: Notice[] = data.map(item => ({
+      id: item.id,
+      title: item.title,
+      content: item.content,
+      author: item.author,
+      department: item.department,
+      subject: item.subject,
+      category: item.category,
+      date: item.created_at.split('T')[0],
+      pinned: item.pinned,
+      pinnedUntil: item.pinned_until ? new Date(item.pinned_until) : undefined,
+      attachments: item.attachments || []
+    }));
+
+    setNotices(mappedNotices);
+  };
+
+  const loadResources = async () => {
+    const { data, error } = await supabase
+      .from('resources')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading resources:', error);
+      return;
+    }
+
+    const mappedResources: Resource[] = data.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      type: item.type,
+      subject: item.subject,
+      uploadedBy: item.uploaded_by,
+      uploadDate: item.created_at.split('T')[0],
+      size: item.size,
+      downloads: item.downloads,
+      likes: item.likes,
+      tags: item.tags || [],
+      favorited: false // This would need to be determined based on user preferences
+    }));
+
+    setResources(mappedResources);
+  };
+
+  const loadStudentNotes = async () => {
+    const { data, error } = await supabase
+      .from('student_notes')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading student notes:', error);
+      return;
+    }
+
+    const mappedNotes: StudentNote[] = data.map(item => ({
+      id: item.id,
+      studentId: item.student_id,
+      note: item.note,
+      author: item.author,
+      timestamp: item.created_at
+    }));
+
+    setStudentNotes(mappedNotes);
+  };
+
+  const addAssignment = async (newAssignment: Omit<Assignment, 'id' | 'timestamp'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('assignments')
+        .insert({
+          title: newAssignment.title,
+          description: newAssignment.description,
+          subject: newAssignment.subject,
+          due_date: newAssignment.dueDate,
+          author: newAssignment.author,
+          author_role: newAssignment.authorRole,
+          attachments: newAssignment.attachments,
+          class_targets: newAssignment.classTargets
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const assignment: Assignment = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        subject: data.subject,
+        dueDate: data.due_date,
+        author: data.author,
+        authorRole: data.author_role,
+        timestamp: data.created_at,
+        attachments: data.attachments || [],
+        classTargets: data.class_targets || []
+      };
+
+      setAssignments(prev => [assignment, ...prev]);
+    } catch (error) {
+      console.error('Error adding assignment:', error);
+      throw error;
+    }
+  };
+
+  const addNotice = async (newNotice: Omit<Notice, 'id' | 'date'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('notices')
+        .insert({
+          title: newNotice.title,
+          content: newNotice.content,
+          author: newNotice.author,
+          department: newNotice.department,
+          subject: newNotice.subject,
+          category: newNotice.category,
+          pinned: newNotice.pinned,
+          attachments: newNotice.attachments
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const notice: Notice = {
+        id: data.id,
+        title: data.title,
+        content: data.content,
+        author: data.author,
+        department: data.department,
+        subject: data.subject,
+        category: data.category,
+        date: data.created_at.split('T')[0],
+        pinned: data.pinned,
+        attachments: data.attachments || []
+      };
+
+      setNotices(prev => [notice, ...prev]);
+    } catch (error) {
+      console.error('Error adding notice:', error);
+      throw error;
+    }
   };
 
   const toggleResourceFavorite = (resourceId: string) => {
@@ -253,13 +301,33 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     ));
   };
 
-  const addStudentNote = (newNote: Omit<StudentNote, 'id' | 'timestamp'>) => {
-    const note: StudentNote = {
-      ...newNote,
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString()
-    };
-    setStudentNotes(prev => [note, ...prev]);
+  const addStudentNote = async (newNote: Omit<StudentNote, 'id' | 'timestamp'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('student_notes')
+        .insert({
+          student_id: newNote.studentId,
+          note: newNote.note,
+          author: newNote.author
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const note: StudentNote = {
+        id: data.id,
+        studentId: data.student_id,
+        note: data.note,
+        author: data.author,
+        timestamp: data.created_at
+      };
+
+      setStudentNotes(prev => [note, ...prev]);
+    } catch (error) {
+      console.error('Error adding student note:', error);
+      throw error;
+    }
   };
 
   const getStudentNotes = (studentId: string, facultyName?: string) => {
@@ -270,28 +338,82 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return notes;
   };
 
-  const pinNotice = (noticeId: string, pinUntil: Date) => {
-    setNotices(prev => prev.map(notice => 
-      notice.id === noticeId 
-        ? { ...notice, pinned: true, pinnedUntil: pinUntil }
-        : notice
-    ));
+  const pinNotice = async (noticeId: string, pinUntil: Date) => {
+    try {
+      const { error } = await supabase
+        .from('notices')
+        .update({
+          pinned: true,
+          pinned_until: pinUntil.toISOString()
+        })
+        .eq('id', noticeId);
+
+      if (error) throw error;
+
+      setNotices(prev => prev.map(notice => 
+        notice.id === noticeId 
+          ? { ...notice, pinned: true, pinnedUntil: pinUntil }
+          : notice
+      ));
+    } catch (error) {
+      console.error('Error pinning notice:', error);
+      throw error;
+    }
   };
 
-  const unpinNotice = (noticeId: string) => {
-    setNotices(prev => prev.map(notice => 
-      notice.id === noticeId 
-        ? { ...notice, pinned: false, pinnedUntil: undefined }
-        : notice
-    ));
+  const unpinNotice = async (noticeId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notices')
+        .update({
+          pinned: false,
+          pinned_until: null
+        })
+        .eq('id', noticeId);
+
+      if (error) throw error;
+
+      setNotices(prev => prev.map(notice => 
+        notice.id === noticeId 
+          ? { ...notice, pinned: false, pinnedUntil: undefined }
+          : notice
+      ));
+    } catch (error) {
+      console.error('Error unpinning notice:', error);
+      throw error;
+    }
   };
 
-  const deleteAssignment = (assignmentId: string) => {
-    setAssignments(prev => prev.filter(assignment => assignment.id !== assignmentId));
+  const deleteAssignment = async (assignmentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('assignments')
+        .delete()
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+
+      setAssignments(prev => prev.filter(assignment => assignment.id !== assignmentId));
+    } catch (error) {
+      console.error('Error deleting assignment:', error);
+      throw error;
+    }
   };
 
-  const deleteResource = (resourceId: string) => {
-    setResources(prev => prev.filter(resource => resource.id !== resourceId));
+  const deleteResource = async (resourceId: string) => {
+    try {
+      const { error } = await supabase
+        .from('resources')
+        .delete()
+        .eq('id', resourceId);
+
+      if (error) throw error;
+
+      setResources(prev => prev.filter(resource => resource.id !== resourceId));
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+      throw error;
+    }
   };
 
   // Auto-unpin expired notices
@@ -309,6 +431,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const interval = setInterval(checkExpiredPins, 60000); // Check every minute
     return () => clearInterval(interval);
   }, []);
+
+  if (loading && user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AppContext.Provider value={{

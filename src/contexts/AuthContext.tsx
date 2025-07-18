@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, AuthState, UserRole } from '@/types/auth';
+import { User, AuthState } from '@/types/auth';
+import { supabase, Profile } from '@/lib/supabase';
+import { Session } from '@supabase/supabase-js';
 
 interface AuthContextType extends AuthState {
-  login: (sapid: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, userData: Partial<Profile>) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -17,45 +20,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Mock users for demo - in real app this would come from Supabase
-const mockUsers: Record<string, { password: string; user: User }> = {
-  'STU001': {
-    password: 'password123',
-    user: {
-      id: '1',
-      email: 'student@college.edu',
-      name: 'John Doe',
-      role: 'student',
-      department: 'Computer Science',
-      year: '3rd Year',
-      createdAt: new Date().toISOString(),
-    }
-  },
-  'ADM001': {
-    password: 'admin123',
-    user: {
-      id: '2',
-      email: 'admin@college.edu',
-      name: 'Jane Smith',
-      role: 'admin',
-      department: 'Computer Science',
-      year: '4th Year',
-      createdAt: new Date().toISOString(),
-    }
-  },
-  'FAC001': {
-    password: 'faculty123',
-    user: {
-      id: '3',
-      email: 'faculty@college.edu',
-      name: 'Dr. Robert Johnson',
-      role: 'faculty',
-      department: 'Computer Science',
-      createdAt: new Date().toISOString(),
-    }
-  }
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
@@ -64,36 +28,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem('campus_connect_user');
-    if (savedUser) {
-      try {
-        const user = JSON.parse(savedUser);
-        setAuthState({ user, loading: false, error: null });
-      } catch (error) {
-        localStorage.removeItem('campus_connect_user');
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      } else {
         setAuthState({ user: null, loading: false, error: null });
       }
-    } else {
-      setAuthState({ user: null, loading: false, error: null });
-    }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          await loadUserProfile(session.user.id);
+        } else if (event === 'SIGNED_OUT') {
+          setAuthState({ user: null, loading: false, error: null });
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (sapid: string, password: string): Promise<void> => {
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+
+      const user: User = {
+        id: profile.id,
+        email: profile.email,
+        name: profile.name,
+        role: profile.role,
+        department: profile.department,
+        year: profile.year,
+        createdAt: profile.created_at,
+      };
+
+      setAuthState({ user, loading: false, error: null });
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      setAuthState({ user: null, loading: false, error: 'Failed to load user profile' });
+    }
+  };
+
+  const login = async (email: string, password: string): Promise<void> => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const userRecord = mockUsers[sapid];
-      if (!userRecord || userRecord.password !== password) {
-        throw new Error('Invalid SAPID or password');
-      }
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      const user = userRecord.user;
-      localStorage.setItem('campus_connect_user', JSON.stringify(user));
-      setAuthState({ user, loading: false, error: null });
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      // User profile will be loaded by the auth state change listener
     } catch (error) {
       setAuthState({
         user: null,
@@ -104,14 +102,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('campus_connect_user');
+  const signup = async (email: string, password: string, userData: Partial<Profile>): Promise<void> => {
+    setAuthState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) throw new Error(error.message);
+
+      if (data.user) {
+        // Create profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email,
+            ...userData,
+          });
+
+        if (profileError) throw new Error(profileError.message);
+      }
+    } catch (error) {
+      setAuthState({
+        user: null,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Signup failed'
+      });
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
     setAuthState({ user: null, loading: false, error: null });
   };
 
   const value: AuthContextType = {
     ...authState,
     login,
+    signup,
     logout,
     isAuthenticated: !!authState.user,
   };

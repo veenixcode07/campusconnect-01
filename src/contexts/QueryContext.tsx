@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { supabase, Query as SupabaseQuery, Answer as SupabaseAnswer } from '@/lib/supabase';
+import { useAuth } from './AuthContext';
 
 export interface Answer {
   id: string;
@@ -42,216 +44,270 @@ export const useQuery = () => {
   return context;
 };
 
-const initialQueries: Query[] = [
-  {
-    id: '1',
-    title: "Advanced Database Query Optimization",
-    content: "I'm working on optimizing complex SQL queries for our database project. The queries involve multiple joins and subqueries, and they're running very slowly. Can anyone help with optimization techniques?",
-    author: "Alice Cooper",
-    subject: "Database Systems",
-    replies: 3,
-    likes: 18,
-    solved: true,
-    timestamp: "2024-01-20T09:30:00Z",
-    answers: [
-      {
-        id: '1',
-        content: "Start by analyzing your execution plan. Look for table scans and consider adding appropriate indexes. Also, try to rewrite subqueries as joins where possible for better performance.",
-        author: "Prof. Williams",
-        authorRole: 'faculty',
-        timestamp: "2024-01-20T10:15:00Z",
-        isAccepted: true
-      },
-      {
-        id: '2',
-        content: "I had a similar issue. Using EXPLAIN ANALYZE helped me identify bottlenecks. Also consider partitioning large tables if your dataset is huge.",
-        author: "Mark Thompson",
-        authorRole: 'student',
-        timestamp: "2024-01-20T11:00:00Z"
-      },
-      {
-        id: '3',
-        content: "Don't forget about query caching and consider using materialized views for frequently accessed complex queries.",
-        author: "Dr. Chen",
-        authorRole: 'faculty',
-        timestamp: "2024-01-20T14:30:00Z"
-      }
-    ],
-    likedBy: ['STU001', 'STU002', 'FAC001']
-  },
-  {
-    id: '2',
-    title: "Machine Learning Algorithm Selection",
-    content: "For my final project, I need to classify customer behavior data. I'm torn between using Random Forest, SVM, or Neural Networks. What factors should I consider when choosing?",
-    author: "David Kim",
-    subject: "Machine Learning",
-    replies: 2,
-    likes: 15,
-    solved: false,
-    timestamp: "2024-01-19T14:20:00Z",
-    answers: [
-      {
-        id: '4',
-        content: "Consider your dataset size, interpretability needs, and computational resources. Random Forest is great for tabular data and provides feature importance. Neural Networks need more data but can capture complex patterns.",
-        author: "Dr. Patel",
-        authorRole: 'faculty',
-        timestamp: "2024-01-19T15:45:00Z"
-      },
-      {
-        id: '5',
-        content: "I'd suggest starting with Random Forest for baseline performance, then try SVM if you need better results. Neural Networks should be your last resort unless you have a large dataset.",
-        author: "Lisa Zhang",
-        authorRole: 'student',
-        timestamp: "2024-01-19T16:30:00Z"
-      }
-    ],
-    likedBy: ['STU003', 'ADM001']
-  },
-  {
-    id: '3',
-    title: "Quantum Computing Study Group",
-    content: "Is anyone interested in forming a study group for Quantum Computing fundamentals? We could meet weekly to discuss concepts and solve problems together.",
-    author: "Sarah Johnson",
-    subject: "Quantum Computing",
-    replies: 4,
-    likes: 22,
-    solved: false,
-    timestamp: "2024-01-18T11:15:00Z",
-    answers: [
-      {
-        id: '6',
-        content: "Count me in! I'm struggling with quantum gates and circuits. Group study would be really helpful.",
-        author: "Tom Wilson",
-        authorRole: 'student',
-        timestamp: "2024-01-18T12:00:00Z"
-      },
-      {
-        id: '7',
-        content: "Great idea! I suggest we start with the basics of qubits and superposition before moving to more complex topics.",
-        author: "Emily Davis",
-        authorRole: 'student',
-        timestamp: "2024-01-18T13:30:00Z"
-      },
-      {
-        id: '8',
-        content: "I'm interested too! Maybe we can use IBM Qiskit for practical exercises.",
-        author: "Alex Rodriguez",
-        authorRole: 'student',
-        timestamp: "2024-01-18T14:15:00Z"
-      },
-      {
-        id: '9',
-        content: "Excellent initiative! I can provide guidance and additional resources. Consider meeting in the physics lab where we have quantum simulation software.",
-        author: "Prof. Anderson",
-        authorRole: 'faculty',
-        timestamp: "2024-01-18T16:00:00Z"
-      }
-    ],
-    likedBy: ['STU001', 'STU004', 'STU005', 'FAC002']
-  },
-  {
-    id: '4',
-    title: "Cybersecurity Career Advice",
-    content: "I'm a second-year CS student interested in cybersecurity. What skills should I focus on developing, and are there any internship opportunities you'd recommend?",
-    author: "Jessica Lee",
-    subject: "Career Guidance",
-    replies: 2,
-    likes: 28,
-    solved: true,
-    timestamp: "2024-01-17T10:00:00Z",
-    answers: [
-      {
-        id: '10',
-        content: "Focus on networking fundamentals, cryptography, and hands-on experience with security tools. Participate in CTF competitions and consider certifications like CompTIA Security+. I can share some internship opportunities.",
-        author: "Prof. Martinez",
-        authorRole: 'faculty',
-        timestamp: "2024-01-17T11:30:00Z",
-        isAccepted: true
-      },
-      {
-        id: '11',
-        content: "Also learn Python and bash scripting - they're essential for security automation. Check out HackTheBox and TryHackMe for practical experience.",
-        author: "Ryan Foster",
-        authorRole: 'student',
-        timestamp: "2024-01-17T15:20:00Z"
-      }
-    ],
-    likedBy: ['STU001', 'STU002', 'STU003', 'STU006', 'ADM001']
-  }
-];
-
 export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [queries, setQueries] = useState<Query[]>(initialQueries);
+  const { user } = useAuth();
+  const [queries, setQueries] = useState<Query[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const addQuery = (newQuery: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy'>) => {
-    const query: Query = {
-      ...newQuery,
-      id: Date.now().toString(),
-      replies: 0,
-      likes: 0,
-      solved: false,
-      timestamp: new Date().toISOString(),
-      answers: [],
-      likedBy: []
-    };
-    setQueries(prev => [query, ...prev]);
-  };
+  // Load queries when user is authenticated
+  React.useEffect(() => {
+    if (user) {
+      loadQueries();
+    }
+  }, [user]);
 
-  const addAnswer = (queryId: string, newAnswer: Omit<Answer, 'id' | 'timestamp'>) => {
-    const answer: Answer = {
-      ...newAnswer,
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString()
-    };
+  const loadQueries = async () => {
+    try {
+      setLoading(true);
+      
+      // Load queries
+      const { data: queriesData, error: queriesError } = await supabase
+        .from('queries')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    setQueries(prev => prev.map(query => {
-      if (query.id === queryId) {
+      if (queriesError) throw queriesError;
+
+      // Load answers for all queries
+      const { data: answersData, error: answersError } = await supabase
+        .from('answers')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (answersError) throw answersError;
+
+      // Map and combine data
+      const mappedQueries: Query[] = queriesData.map(query => {
+        const queryAnswers = answersData
+          .filter(answer => answer.query_id === query.id)
+          .map(answer => ({
+            id: answer.id,
+            content: answer.content,
+            author: answer.author,
+            authorRole: answer.author_role,
+            timestamp: answer.created_at,
+            isAccepted: answer.is_accepted
+          }));
+
         return {
-          ...query,
-          answers: [...query.answers, answer],
-          replies: query.replies + 1
+          id: query.id,
+          title: query.title,
+          content: query.content,
+          author: query.author,
+          subject: query.subject,
+          replies: queryAnswers.length,
+          likes: query.likes,
+          solved: query.solved,
+          timestamp: query.created_at,
+          answers: queryAnswers,
+          likedBy: query.liked_by || []
         };
-      }
-      return query;
-    }));
+      });
+
+      setQueries(mappedQueries);
+    } catch (error) {
+      console.error('Error loading queries:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const likeQuery = (queryId: string, userId: string) => {
-    setQueries(prev => prev.map(query => {
-      if (query.id === queryId) {
-        const hasLiked = query.likedBy.includes(userId);
-        return {
-          ...query,
-          likes: hasLiked ? query.likes - 1 : query.likes + 1,
-          likedBy: hasLiked 
-            ? query.likedBy.filter(id => id !== userId)
-            : [...query.likedBy, userId]
-        };
-      }
-      return query;
-    }));
+  const addQuery = async (newQuery: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('queries')
+        .insert({
+          title: newQuery.title,
+          content: newQuery.content,
+          author: newQuery.author,
+          subject: newQuery.subject,
+          likes: 0,
+          solved: false,
+          liked_by: []
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const query: Query = {
+        id: data.id,
+        title: data.title,
+        content: data.content,
+        author: data.author,
+        subject: data.subject,
+        replies: 0,
+        likes: 0,
+        solved: false,
+        timestamp: data.created_at,
+        answers: [],
+        likedBy: []
+      };
+
+      setQueries(prev => [query, ...prev]);
+    } catch (error) {
+      console.error('Error adding query:', error);
+      throw error;
+    }
   };
 
-  const markAnswerAsAccepted = (queryId: string, answerId: string) => {
-    setQueries(prev => prev.map(query => {
-      if (query.id === queryId) {
-        const updatedAnswers = query.answers.map(answer => ({
-          ...answer,
-          isAccepted: answer.id === answerId
-        }));
-        return {
-          ...query,
-          answers: updatedAnswers,
-          solved: true
-        };
-      }
-      return query;
-    }));
+  const addAnswer = async (queryId: string, newAnswer: Omit<Answer, 'id' | 'timestamp'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('answers')
+        .insert({
+          query_id: queryId,
+          content: newAnswer.content,
+          author: newAnswer.author,
+          author_role: newAnswer.authorRole,
+          is_accepted: false
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const answer: Answer = {
+        id: data.id,
+        content: data.content,
+        author: data.author,
+        authorRole: data.author_role,
+        timestamp: data.created_at,
+        isAccepted: false
+      };
+
+      // Update replies count in database
+      await supabase
+        .from('queries')
+        .update({ replies: supabase.sql`replies + 1` })
+        .eq('id', queryId);
+
+      setQueries(prev => prev.map(query => {
+        if (query.id === queryId) {
+          return {
+            ...query,
+            answers: [...query.answers, answer],
+            replies: query.replies + 1
+          };
+        }
+        return query;
+      }));
+    } catch (error) {
+      console.error('Error adding answer:', error);
+      throw error;
+    }
   };
 
-  const deleteQuery = (queryId: string) => {
-    setQueries(prev => prev.filter(query => query.id !== queryId));
+  const likeQuery = async (queryId: string, userId: string) => {
+    try {
+      const query = queries.find(q => q.id === queryId);
+      if (!query) return;
+
+      const hasLiked = query.likedBy.includes(userId);
+      const newLikedBy = hasLiked 
+        ? query.likedBy.filter(id => id !== userId)
+        : [...query.likedBy, userId];
+      const newLikes = hasLiked ? query.likes - 1 : query.likes + 1;
+
+      const { error } = await supabase
+        .from('queries')
+        .update({
+          likes: newLikes,
+          liked_by: newLikedBy
+        })
+        .eq('id', queryId);
+
+      if (error) throw error;
+
+      setQueries(prev => prev.map(q => {
+        if (q.id === queryId) {
+          return {
+            ...q,
+            likes: newLikes,
+            likedBy: newLikedBy
+          };
+        }
+        return q;
+      }));
+    } catch (error) {
+      console.error('Error liking query:', error);
+      throw error;
+    }
   };
+
+  const markAnswerAsAccepted = async (queryId: string, answerId: string) => {
+    try {
+      // First, unmark all other answers for this query
+      await supabase
+        .from('answers')
+        .update({ is_accepted: false })
+        .eq('query_id', queryId);
+
+      // Mark the selected answer as accepted
+      await supabase
+        .from('answers')
+        .update({ is_accepted: true })
+        .eq('id', answerId);
+
+      // Mark the query as solved
+      await supabase
+        .from('queries')
+        .update({ solved: true })
+        .eq('id', queryId);
+
+      setQueries(prev => prev.map(query => {
+        if (query.id === queryId) {
+          const updatedAnswers = query.answers.map(answer => ({
+            ...answer,
+            isAccepted: answer.id === answerId
+          }));
+          return {
+            ...query,
+            answers: updatedAnswers,
+            solved: true
+          };
+        }
+        return query;
+      }));
+    } catch (error) {
+      console.error('Error marking answer as accepted:', error);
+      throw error;
+    }
+  };
+
+  const deleteQuery = async (queryId: string) => {
+    try {
+      // Delete all answers first (due to foreign key constraint)
+      await supabase
+        .from('answers')
+        .delete()
+        .eq('query_id', queryId);
+
+      // Delete the query
+      const { error } = await supabase
+        .from('queries')
+        .delete()
+        .eq('id', queryId);
+
+      if (error) throw error;
+
+      setQueries(prev => prev.filter(query => query.id !== queryId));
+    } catch (error) {
+      console.error('Error deleting query:', error);
+      throw error;
+    }
+  };
+
+  if (loading && user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading queries...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <QueryContext.Provider value={{
