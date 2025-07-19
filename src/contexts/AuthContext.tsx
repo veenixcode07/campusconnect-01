@@ -4,8 +4,8 @@ import { supabase, Profile } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, userData: Partial<Profile>) => Promise<void>;
+  login: (sapid: string, password: string) => Promise<void>;
+  signup: (sapid: string, password: string, userData: Partial<Profile>) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -63,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const user: User = {
         id: profile.id,
-        email: profile.email,
+        email: profile.sapid,
         name: profile.name,
         role: profile.role,
         department: profile.department,
@@ -78,12 +78,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (sapid: string, password: string): Promise<void> => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
+      // First, find the user's email by SAPID
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('sapid', sapid)
+        .single();
+
+      if (profileError || !profile) {
+        throw new Error('Invalid SAPID');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: profile.email,
         password,
       });
 
@@ -102,10 +113,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (email: string, password: string, userData: Partial<Profile>): Promise<void> => {
+  const signup = async (sapid: string, password: string, userData: Partial<Profile>): Promise<void> => {
     setAuthState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
+      // Generate email from SAPID for Supabase auth
+      const email = `${sapid}@college.edu`;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -120,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .insert({
             id: data.user.id,
             email,
+            sapid,
             ...userData,
           });
 
