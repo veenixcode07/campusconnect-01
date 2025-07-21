@@ -79,7 +79,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border">
         <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user.name}!</h1>
         <p className="text-gray-600 mt-1">
-          {user.department} • {user.year} • Student ID: {user.id.padStart(6, '0')} • Admin
+          {user.department} • {user.year} • SAPID: {user.sapid} • Admin
         </p>
       </div>
 

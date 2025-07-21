@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   department?: string;
   year?: string;
+  section?: string;
   createdAt: string;
 }
 

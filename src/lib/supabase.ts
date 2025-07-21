@@ -23,6 +23,7 @@ export interface Profile {
   department?: string
   year?: string
   sapid?: string
+  section?: string
   created_at: string
   updated_at: string
 }

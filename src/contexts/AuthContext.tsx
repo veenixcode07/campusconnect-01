@@ -65,7 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         role: profile.role as UserRole,
         department: profile.department,
         year: profile.year,
-        section: profile.section
+        section: profile.section,
+        createdAt: profile.created_at
       };
 
       setUser(userData);
