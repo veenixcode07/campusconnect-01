@@ -18,7 +18,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Database types
 export interface Profile {
   id: string
-  email: string
   name: string
   role: 'student' | 'admin' | 'faculty'
   department?: string
