@@ -17,13 +17,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Demo passwords for testing
-  const demoPasswords: Record<string, string> = {
-    'STU001': 'password123',
-    'ADM001': 'admin123',
-    'FAC001': 'faculty123'
-  };
-
   useEffect(() => {
     // Check for existing session on mount
     const savedUser = localStorage.getItem('user');
@@ -42,7 +35,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      // Query the profiles table for the user
+      // First, authenticate with Supabase using email/password
+      // We'll use a mapping of SAPID to email for demo accounts
+      const emailMapping: Record<string, string> = {
+        'STU001': 'student@college.edu',
+        'ADM001': 'admin@college.edu', 
+        'FAC001': 'faculty@college.edu'
+      };
+
+      const email = emailMapping[sapid];
+      if (!email) {
+        throw new Error('Invalid SAPID');
+      }
+
+      // Authenticate with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (authError) {
+        throw new Error('Invalid credentials');
+      }
+
+      // Query the profiles table for the user data
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -50,12 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (profileError || !profile) {
-        throw new Error('Invalid SAPID');
-      }
-
-      // Check password (using demo passwords for now)
-      if (demoPasswords[sapid] !== password) {
-        throw new Error('Invalid password');
+        throw new Error('Profile not found');
       }
 
       const userData: User = {
@@ -81,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    supabase.auth.signOut();
     setUser(null);
     localStorage.removeItem('user');
     setError(null);
