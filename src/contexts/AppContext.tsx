@@ -111,6 +111,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const loadAssignments = async () => {
     const { data, error } = await supabase
+      // @ts-ignore - Types will be regenerated after migration
       .from('assignments')
       .select('*')
       .order('created_at', { ascending: false });
@@ -120,7 +121,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return;
     }
 
-    const mappedAssignments: Assignment[] = data.map(item => ({
+    const mappedAssignments: Assignment[] = (data || []).map((item: any) => ({
       id: item.id,
       title: item.title,
       description: item.description,
@@ -138,6 +139,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const loadNotices = async () => {
     const { data, error } = await supabase
+      // @ts-ignore - Types will be regenerated after migration
       .from('notices')
       .select('*')
       .order('created_at', { ascending: false });
@@ -147,7 +149,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return;
     }
 
-    const mappedNotices: Notice[] = data.map(item => ({
+    const mappedNotices: Notice[] = (data || []).map((item: any) => ({
       id: item.id,
       title: item.title,
       content: item.content,
@@ -166,6 +168,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const loadResources = async () => {
     const { data, error } = await supabase
+      // @ts-ignore - Types will be regenerated after migration
       .from('resources')
       .select('*')
       .order('created_at', { ascending: false });
@@ -175,7 +178,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return;
     }
 
-    const mappedResources: Resource[] = data.map(item => ({
+    const mappedResources: Resource[] = (data || []).map((item: any) => ({
       id: item.id,
       title: item.title,
       description: item.description,
@@ -195,6 +198,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const loadStudentNotes = async () => {
     const { data, error } = await supabase
+      // @ts-ignore - Types will be regenerated after migration
       .from('student_notes')
       .select('*')
       .order('created_at', { ascending: false });
@@ -204,7 +208,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return;
     }
 
-    const mappedNotes: StudentNote[] = data.map(item => ({
+    const mappedNotes: StudentNote[] = (data || []).map((item: any) => ({
       id: item.id,
       studentId: item.student_id,
       note: item.note,
@@ -218,7 +222,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addAssignment = async (newAssignment: Omit<Assignment, 'id' | 'timestamp'>) => {
     try {
       const { data, error } = await supabase
+        // @ts-ignore - Types will be regenerated after migration
         .from('assignments')
+        // @ts-ignore - Types will be regenerated after migration
         .insert({
           title: newAssignment.title,
           description: newAssignment.description,
@@ -235,16 +241,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (error) throw error;
 
       const assignment: Assignment = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        subject: data.subject,
-        dueDate: data.due_date,
-        author: data.author,
-        authorRole: data.author_role,
-        timestamp: data.created_at,
-        attachments: data.attachments || [],
-        classTargets: data.class_targets || []
+        id: (data as any).id,
+        title: (data as any).title,
+        description: (data as any).description,
+        subject: (data as any).subject,
+        dueDate: (data as any).due_date,
+        author: (data as any).author,
+        authorRole: (data as any).author_role,
+        timestamp: (data as any).created_at,
+        attachments: (data as any).attachments || [],
+        classTargets: (data as any).class_targets || []
       };
 
       setAssignments(prev => [assignment, ...prev]);
@@ -257,7 +263,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addNotice = async (newNotice: Omit<Notice, 'id' | 'date'>) => {
     try {
       const { data, error } = await supabase
+        // @ts-ignore - Types will be regenerated after migration
         .from('notices')
+        // @ts-ignore - Types will be regenerated after migration
         .insert({
           title: newNotice.title,
           content: newNotice.content,
@@ -274,16 +282,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (error) throw error;
 
       const notice: Notice = {
-        id: data.id,
-        title: data.title,
-        content: data.content,
-        author: data.author,
-        department: data.department,
-        subject: data.subject,
-        category: data.category,
-        date: data.created_at.split('T')[0],
-        pinned: data.pinned,
-        attachments: data.attachments || []
+        id: (data as any).id,
+        title: (data as any).title,
+        content: (data as any).content,
+        author: (data as any).author,
+        department: (data as any).department,
+        subject: (data as any).subject,
+        category: (data as any).category,
+        date: (data as any).created_at.split('T')[0],
+        pinned: (data as any).pinned,
+        attachments: (data as any).attachments || []
       };
 
       setNotices(prev => [notice, ...prev]);
@@ -304,7 +312,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addStudentNote = async (newNote: Omit<StudentNote, 'id' | 'timestamp'>) => {
     try {
       const { data, error } = await supabase
+        // @ts-ignore - Types will be regenerated after migration
         .from('student_notes')
+        // @ts-ignore - Types will be regenerated after migration
         .insert({
           student_id: newNote.studentId,
           note: newNote.note,
@@ -316,11 +326,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (error) throw error;
 
       const note: StudentNote = {
-        id: data.id,
-        studentId: data.student_id,
-        note: data.note,
-        author: data.author,
-        timestamp: data.created_at
+        id: (data as any).id,
+        studentId: (data as any).student_id,
+        note: (data as any).note,
+        author: (data as any).author,
+        timestamp: (data as any).created_at
       };
 
       setStudentNotes(prev => [note, ...prev]);
@@ -341,7 +351,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const pinNotice = async (noticeId: string, pinUntil: Date) => {
     try {
       const { error } = await supabase
+        // @ts-ignore - Types will be regenerated after migration
         .from('notices')
+        // @ts-ignore - Types will be regenerated after migration
         .update({
           pinned: true,
           pinned_until: pinUntil.toISOString()
@@ -364,7 +376,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const unpinNotice = async (noticeId: string) => {
     try {
       const { error } = await supabase
+        // @ts-ignore - Types will be regenerated after migration
         .from('notices')
+        // @ts-ignore - Types will be regenerated after migration
         .update({
           pinned: false,
           pinned_until: null
@@ -387,6 +401,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const deleteAssignment = async (assignmentId: string) => {
     try {
       const { error } = await supabase
+        // @ts-ignore - Types will be regenerated after migration
         .from('assignments')
         .delete()
         .eq('id', assignmentId);
@@ -403,6 +418,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const deleteResource = async (resourceId: string) => {
     try {
       const { error } = await supabase
+        // @ts-ignore - Types will be regenerated after migration
         .from('resources')
         .delete()
         .eq('id', resourceId);
