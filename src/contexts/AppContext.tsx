@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
 export interface Assignment {
@@ -80,225 +79,119 @@ export const useApp = () => {
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [resources, setResources] = useState<Resource[]>([]);
-  const [studentNotes, setStudentNotes] = useState<StudentNote[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Load data when user is authenticated
-  useEffect(() => {
-    if (user) {
-      loadAllData();
+  
+  // Initialize with mock data
+  const [assignments, setAssignments] = useState<Assignment[]>([
+    {
+      id: '1',
+      title: 'Data Structures Project',
+      description: 'Implement a binary search tree with insertion, deletion, and traversal operations.',
+      subject: 'Computer Science',
+      dueDate: '2024-09-15T23:59:59Z',
+      author: 'Dr. Sarah Faculty',
+      authorRole: 'faculty',
+      timestamp: '2024-08-20T10:00:00Z',
+      attachments: [],
+      classTargets: ['Computer Science-2024-A']
+    },
+    {
+      id: '2',
+      title: 'Algorithm Analysis Report',
+      description: 'Analyze the time complexity of sorting algorithms and write a comprehensive report.',
+      subject: 'Computer Science',
+      dueDate: '2024-09-10T23:59:59Z',
+      author: 'Dr. Sarah Faculty',
+      authorRole: 'faculty',
+      timestamp: '2024-08-15T14:30:00Z',
+      attachments: [],
+      classTargets: ['Computer Science-2024-A']
     }
-  }, [user]);
+  ]);
 
-  const loadAllData = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([
-        loadAssignments(),
-        loadNotices(),
-        loadResources(),
-        loadStudentNotes()
-      ]);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
+  const [notices, setNotices] = useState<Notice[]>([
+    {
+      id: '1',
+      title: 'Welcome to New Semester',
+      content: 'Welcome all students to the new academic semester. Please check your schedules and report any discrepancies.',
+      author: 'Admin User',
+      department: 'Administration',
+      subject: 'General',
+      category: 'general',
+      date: '2024-08-20',
+      pinned: true,
+      attachments: []
+    },
+    {
+      id: '2',
+      title: 'Mid-term Examination Schedule',
+      content: 'The mid-term examinations will begin from next Monday. Please prepare accordingly and check the timetable.',
+      author: 'Dr. Sarah Faculty',
+      department: 'Computer Science',
+      subject: 'Computer Science',
+      category: 'exam',
+      date: '2024-08-18',
+      pinned: false,
+      attachments: []
     }
+  ]);
+
+  const [resources, setResources] = useState<Resource[]>([
+    {
+      id: '1',
+      title: 'Introduction to Algorithms PDF',
+      description: 'Comprehensive guide to algorithms and data structures',
+      type: 'pdf',
+      subject: 'Computer Science',
+      uploadedBy: 'Dr. Sarah Faculty',
+      uploadDate: '2024-08-15',
+      size: '2.5 MB',
+      downloads: 45,
+      likes: 12,
+      tags: ['algorithms', 'data-structures', 'programming'],
+      favorited: false
+    },
+    {
+      id: '2',
+      title: 'Database Design Tutorial',
+      description: 'Step-by-step tutorial on database design principles',
+      type: 'video',
+      subject: 'Computer Science',
+      uploadedBy: 'Dr. Sarah Faculty',
+      uploadDate: '2024-08-10',
+      size: '150 MB',
+      downloads: 28,
+      likes: 8,
+      tags: ['database', 'sql', 'design'],
+      favorited: false
+    }
+  ]);
+
+  const [studentNotes, setStudentNotes] = useState<StudentNote[]>([
+    {
+      id: '1',
+      studentId: 'STU001',
+      note: 'Student shows excellent progress in data structures concepts.',
+      author: 'Dr. Sarah Faculty',
+      timestamp: '2024-08-20T10:00:00Z'
+    }
+  ]);
+
+  const addAssignment = (newAssignment: Omit<Assignment, 'id' | 'timestamp'>) => {
+    const assignment: Assignment = {
+      ...newAssignment,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: new Date().toISOString()
+    };
+    setAssignments(prev => [assignment, ...prev]);
   };
 
-  const loadAssignments = async () => {
-    const { data, error } = await supabase
-      // @ts-ignore - Types will be regenerated after migration
-      .from('assignments')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading assignments:', error);
-      return;
-    }
-
-    const mappedAssignments: Assignment[] = (data || []).map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      subject: item.subject,
-      dueDate: item.due_date,
-      author: item.author,
-      authorRole: item.author_role,
-      timestamp: item.created_at,
-      attachments: item.attachments || [],
-      classTargets: item.class_targets || []
-    }));
-
-    setAssignments(mappedAssignments);
-  };
-
-  const loadNotices = async () => {
-    const { data, error } = await supabase
-      // @ts-ignore - Types will be regenerated after migration
-      .from('notices')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading notices:', error);
-      return;
-    }
-
-    const mappedNotices: Notice[] = (data || []).map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      content: item.content,
-      author: item.author,
-      department: item.department,
-      subject: item.subject,
-      category: item.category,
-      date: item.created_at.split('T')[0],
-      pinned: item.pinned,
-      pinnedUntil: item.pinned_until ? new Date(item.pinned_until) : undefined,
-      attachments: item.attachments || []
-    }));
-
-    setNotices(mappedNotices);
-  };
-
-  const loadResources = async () => {
-    const { data, error } = await supabase
-      // @ts-ignore - Types will be regenerated after migration
-      .from('resources')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading resources:', error);
-      return;
-    }
-
-    const mappedResources: Resource[] = (data || []).map((item: any) => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      type: item.type,
-      subject: item.subject,
-      uploadedBy: item.uploaded_by,
-      uploadDate: item.created_at.split('T')[0],
-      size: item.size,
-      downloads: item.downloads,
-      likes: item.likes,
-      tags: item.tags || [],
-      favorited: false // This would need to be determined based on user preferences
-    }));
-
-    setResources(mappedResources);
-  };
-
-  const loadStudentNotes = async () => {
-    const { data, error } = await supabase
-      // @ts-ignore - Types will be regenerated after migration
-      .from('student_notes')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading student notes:', error);
-      return;
-    }
-
-    const mappedNotes: StudentNote[] = (data || []).map((item: any) => ({
-      id: item.id,
-      studentId: item.student_id,
-      note: item.note,
-      author: item.author,
-      timestamp: item.created_at
-    }));
-
-    setStudentNotes(mappedNotes);
-  };
-
-  const addAssignment = async (newAssignment: Omit<Assignment, 'id' | 'timestamp'>) => {
-    try {
-      const { data, error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('assignments')
-        // @ts-ignore - Types will be regenerated after migration
-        .insert({
-          title: newAssignment.title,
-          description: newAssignment.description,
-          subject: newAssignment.subject,
-          due_date: newAssignment.dueDate,
-          author: newAssignment.author,
-          author_role: newAssignment.authorRole,
-          attachments: newAssignment.attachments,
-          class_targets: newAssignment.classTargets
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const assignment: Assignment = {
-        id: (data as any).id,
-        title: (data as any).title,
-        description: (data as any).description,
-        subject: (data as any).subject,
-        dueDate: (data as any).due_date,
-        author: (data as any).author,
-        authorRole: (data as any).author_role,
-        timestamp: (data as any).created_at,
-        attachments: (data as any).attachments || [],
-        classTargets: (data as any).class_targets || []
-      };
-
-      setAssignments(prev => [assignment, ...prev]);
-    } catch (error) {
-      console.error('Error adding assignment:', error);
-      throw error;
-    }
-  };
-
-  const addNotice = async (newNotice: Omit<Notice, 'id' | 'date'>) => {
-    try {
-      const { data, error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('notices')
-        // @ts-ignore - Types will be regenerated after migration
-        .insert({
-          title: newNotice.title,
-          content: newNotice.content,
-          author: newNotice.author,
-          department: newNotice.department,
-          subject: newNotice.subject,
-          category: newNotice.category,
-          pinned: newNotice.pinned,
-          attachments: newNotice.attachments
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const notice: Notice = {
-        id: (data as any).id,
-        title: (data as any).title,
-        content: (data as any).content,
-        author: (data as any).author,
-        department: (data as any).department,
-        subject: (data as any).subject,
-        category: (data as any).category,
-        date: (data as any).created_at.split('T')[0],
-        pinned: (data as any).pinned,
-        attachments: (data as any).attachments || []
-      };
-
-      setNotices(prev => [notice, ...prev]);
-    } catch (error) {
-      console.error('Error adding notice:', error);
-      throw error;
-    }
+  const addNotice = (newNotice: Omit<Notice, 'id' | 'date'>) => {
+    const notice: Notice = {
+      ...newNotice,
+      id: Math.random().toString(36).substr(2, 9),
+      date: new Date().toISOString().split('T')[0]
+    };
+    setNotices(prev => [notice, ...prev]);
   };
 
   const toggleResourceFavorite = (resourceId: string) => {
@@ -309,35 +202,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     ));
   };
 
-  const addStudentNote = async (newNote: Omit<StudentNote, 'id' | 'timestamp'>) => {
-    try {
-      const { data, error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('student_notes')
-        // @ts-ignore - Types will be regenerated after migration
-        .insert({
-          student_id: newNote.studentId,
-          note: newNote.note,
-          author: newNote.author
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const note: StudentNote = {
-        id: (data as any).id,
-        studentId: (data as any).student_id,
-        note: (data as any).note,
-        author: (data as any).author,
-        timestamp: (data as any).created_at
-      };
-
-      setStudentNotes(prev => [note, ...prev]);
-    } catch (error) {
-      console.error('Error adding student note:', error);
-      throw error;
-    }
+  const addStudentNote = (newNote: Omit<StudentNote, 'id' | 'timestamp'>) => {
+    const note: StudentNote = {
+      ...newNote,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: new Date().toISOString()
+    };
+    setStudentNotes(prev => [note, ...prev]);
   };
 
   const getStudentNotes = (studentId: string, facultyName?: string) => {
@@ -348,88 +219,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return notes;
   };
 
-  const pinNotice = async (noticeId: string, pinUntil: Date) => {
-    try {
-      const { error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('notices')
-        // @ts-ignore - Types will be regenerated after migration
-        .update({
-          pinned: true,
-          pinned_until: pinUntil.toISOString()
-        })
-        .eq('id', noticeId);
-
-      if (error) throw error;
-
-      setNotices(prev => prev.map(notice => 
-        notice.id === noticeId 
-          ? { ...notice, pinned: true, pinnedUntil: pinUntil }
-          : notice
-      ));
-    } catch (error) {
-      console.error('Error pinning notice:', error);
-      throw error;
-    }
+  const pinNotice = (noticeId: string, pinUntil: Date) => {
+    setNotices(prev => prev.map(notice => 
+      notice.id === noticeId 
+        ? { ...notice, pinned: true, pinnedUntil: pinUntil }
+        : notice
+    ));
   };
 
-  const unpinNotice = async (noticeId: string) => {
-    try {
-      const { error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('notices')
-        // @ts-ignore - Types will be regenerated after migration
-        .update({
-          pinned: false,
-          pinned_until: null
-        })
-        .eq('id', noticeId);
-
-      if (error) throw error;
-
-      setNotices(prev => prev.map(notice => 
-        notice.id === noticeId 
-          ? { ...notice, pinned: false, pinnedUntil: undefined }
-          : notice
-      ));
-    } catch (error) {
-      console.error('Error unpinning notice:', error);
-      throw error;
-    }
+  const unpinNotice = (noticeId: string) => {
+    setNotices(prev => prev.map(notice => 
+      notice.id === noticeId 
+        ? { ...notice, pinned: false, pinnedUntil: undefined }
+        : notice
+    ));
   };
 
-  const deleteAssignment = async (assignmentId: string) => {
-    try {
-      const { error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('assignments')
-        .delete()
-        .eq('id', assignmentId);
-
-      if (error) throw error;
-
-      setAssignments(prev => prev.filter(assignment => assignment.id !== assignmentId));
-    } catch (error) {
-      console.error('Error deleting assignment:', error);
-      throw error;
-    }
+  const deleteAssignment = (assignmentId: string) => {
+    setAssignments(prev => prev.filter(assignment => assignment.id !== assignmentId));
   };
 
-  const deleteResource = async (resourceId: string) => {
-    try {
-      const { error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('resources')
-        .delete()
-        .eq('id', resourceId);
-
-      if (error) throw error;
-
-      setResources(prev => prev.filter(resource => resource.id !== resourceId));
-    } catch (error) {
-      console.error('Error deleting resource:', error);
-      throw error;
-    }
+  const deleteResource = (resourceId: string) => {
+    setResources(prev => prev.filter(resource => resource.id !== resourceId));
   };
 
   // Auto-unpin expired notices
@@ -447,17 +258,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const interval = setInterval(checkExpiredPins, 60000); // Check every minute
     return () => clearInterval(interval);
   }, []);
-
-  if (loading && user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading data...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <AppContext.Provider value={{

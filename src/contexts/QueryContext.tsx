@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
 export interface Answer {
@@ -46,286 +45,128 @@ export const useQuery = () => {
 
 export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [queries, setQueries] = useState<Query[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Load queries when user is authenticated
-  React.useEffect(() => {
-    if (user) {
-      loadQueries();
+  // Initialize with mock data
+  const [queries, setQueries] = useState<Query[]>([
+    {
+      id: '1',
+      title: 'Help with Binary Tree Implementation',
+      content: 'I am having trouble implementing a binary tree in C++. Can someone help me with the insertion logic?',
+      author: 'John Student',
+      subject: 'Computer Science',
+      replies: 1,
+      likes: 3,
+      solved: false,
+      timestamp: '2024-08-20T10:00:00Z',
+      likedBy: ['FAC001', 'ADM001', 'STU002'],
+      answers: [
+        {
+          id: 'a1',
+          content: 'For binary tree insertion, you need to compare the new value with the current node. If it\'s smaller, go to the left child; if larger, go to the right child. Repeat until you find an empty spot.',
+          author: 'Dr. Sarah Faculty',
+          authorRole: 'faculty',
+          timestamp: '2024-08-20T11:00:00Z',
+          isAccepted: false
+        }
+      ]
+    },
+    {
+      id: '2',
+      title: 'SQL Join Queries Confusion',
+      content: 'Can someone explain the difference between INNER JOIN and LEFT JOIN with examples?',
+      author: 'John Student',
+      subject: 'Computer Science',
+      replies: 1,
+      likes: 5,
+      solved: true,
+      timestamp: '2024-08-19T15:30:00Z',
+      likedBy: ['FAC001', 'STU003', 'STU004', 'ADM001', 'STU005'],
+      answers: [
+        {
+          id: 'a2',
+          content: 'INNER JOIN returns only rows that have matching values in both tables, while LEFT JOIN returns all rows from the left table and matching rows from the right table. If no match is found, NULL values are returned for the right table columns.',
+          author: 'Dr. Sarah Faculty',
+          authorRole: 'faculty',
+          timestamp: '2024-08-19T16:00:00Z',
+          isAccepted: true
+        }
+      ]
     }
-  }, [user]);
+  ]);
 
-  const loadQueries = async () => {
-    try {
-      setLoading(true);
-      
-      // Load queries
-      const { data: queriesData, error: queriesError } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('queries')
-        .select('*')
-        .order('created_at', { ascending: false });
+  const addQuery = (newQuery: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy'>) => {
+    const query: Query = {
+      ...newQuery,
+      id: Math.random().toString(36).substr(2, 9),
+      replies: 0,
+      likes: 0,
+      solved: false,
+      timestamp: new Date().toISOString(),
+      answers: [],
+      likedBy: []
+    };
+    setQueries(prev => [query, ...prev]);
+  };
 
-      if (queriesError) throw queriesError;
+  const addAnswer = (queryId: string, newAnswer: Omit<Answer, 'id' | 'timestamp'>) => {
+    const answer: Answer = {
+      ...newAnswer,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: new Date().toISOString(),
+      isAccepted: false
+    };
 
-      // Load answers for all queries
-      const { data: answersData, error: answersError } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('answers')
-        .select('*')
-        .order('created_at', { ascending: true });
+    setQueries(prev => prev.map(query => {
+      if (query.id === queryId) {
+        return {
+          ...query,
+          answers: [...query.answers, answer],
+          replies: query.replies + 1
+        };
+      }
+      return query;
+    }));
+  };
 
-      if (answersError) throw answersError;
-
-      // Map and combine data
-      const mappedQueries: Query[] = (queriesData || []).map((query: any) => {
-        const queryAnswers = (answersData || [])
-          .filter((answer: any) => answer.query_id === query.id)
-          .map((answer: any) => ({
-            id: answer.id,
-            content: answer.content,
-            author: answer.author,
-            authorRole: answer.author_role,
-            timestamp: answer.created_at,
-            isAccepted: answer.is_accepted
-          }));
+  const likeQuery = (queryId: string, userId: string) => {
+    setQueries(prev => prev.map(query => {
+      if (query.id === queryId) {
+        const hasLiked = query.likedBy.includes(userId);
+        const newLikedBy = hasLiked 
+          ? query.likedBy.filter(id => id !== userId)
+          : [...query.likedBy, userId];
+        const newLikes = hasLiked ? query.likes - 1 : query.likes + 1;
 
         return {
-          id: query.id,
-          title: query.title,
-          content: query.content,
-          author: query.author,
-          subject: query.subject,
-          replies: queryAnswers.length,
-          likes: query.likes,
-          solved: query.solved,
-          timestamp: query.created_at,
-          answers: queryAnswers,
-          likedBy: query.liked_by || []
-        };
-      });
-
-      setQueries(mappedQueries);
-    } catch (error) {
-      console.error('Error loading queries:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addQuery = async (newQuery: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy'>) => {
-    try {
-      const { data, error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('queries')
-        // @ts-ignore - Types will be regenerated after migration
-        .insert({
-          title: newQuery.title,
-          content: newQuery.content,
-          author: newQuery.author,
-          subject: newQuery.subject,
-          likes: 0,
-          solved: false,
-          liked_by: []
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const query: Query = {
-        id: (data as any).id,
-        title: (data as any).title,
-        content: (data as any).content,
-        author: (data as any).author,
-        subject: (data as any).subject,
-        replies: 0,
-        likes: 0,
-        solved: false,
-        timestamp: (data as any).created_at,
-        answers: [],
-        likedBy: []
-      };
-
-      setQueries(prev => [query, ...prev]);
-    } catch (error) {
-      console.error('Error adding query:', error);
-      throw error;
-    }
-  };
-
-  const addAnswer = async (queryId: string, newAnswer: Omit<Answer, 'id' | 'timestamp'>) => {
-    try {
-      const { data, error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('answers')
-        // @ts-ignore - Types will be regenerated after migration
-        .insert({
-          query_id: queryId,
-          content: newAnswer.content,
-          author: newAnswer.author,
-          author_role: newAnswer.authorRole,
-          is_accepted: false
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      const answer: Answer = {
-        id: (data as any).id,
-        content: (data as any).content,
-        author: (data as any).author,
-        authorRole: (data as any).author_role,
-        timestamp: (data as any).created_at,
-        isAccepted: false
-      };
-
-      // Update replies count in database
-      await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('queries')
-        // @ts-ignore - Types will be regenerated after migration
-        .update({ replies: queries.find(q => q.id === queryId)?.replies + 1 || 1 })
-        .eq('id', queryId);
-
-      setQueries(prev => prev.map(query => {
-        if (query.id === queryId) {
-          return {
-            ...query,
-            answers: [...query.answers, answer],
-            replies: query.replies + 1
-          };
-        }
-        return query;
-      }));
-    } catch (error) {
-      console.error('Error adding answer:', error);
-      throw error;
-    }
-  };
-
-  const likeQuery = async (queryId: string, userId: string) => {
-    try {
-      const query = queries.find(q => q.id === queryId);
-      if (!query) return;
-
-      const hasLiked = query.likedBy.includes(userId);
-      const newLikedBy = hasLiked 
-        ? query.likedBy.filter(id => id !== userId)
-        : [...query.likedBy, userId];
-      const newLikes = hasLiked ? query.likes - 1 : query.likes + 1;
-
-      const { error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('queries')
-        // @ts-ignore - Types will be regenerated after migration
-        .update({
+          ...query,
           likes: newLikes,
-          liked_by: newLikedBy
-        })
-        .eq('id', queryId);
-
-      if (error) throw error;
-
-      setQueries(prev => prev.map(q => {
-        if (q.id === queryId) {
-          return {
-            ...q,
-            likes: newLikes,
-            likedBy: newLikedBy
-          };
-        }
-        return q;
-      }));
-    } catch (error) {
-      console.error('Error liking query:', error);
-      throw error;
-    }
+          likedBy: newLikedBy
+        };
+      }
+      return query;
+    }));
   };
 
-  const markAnswerAsAccepted = async (queryId: string, answerId: string) => {
-    try {
-      // First, unmark all other answers for this query
-      await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('answers')
-        // @ts-ignore - Types will be regenerated after migration
-        .update({ is_accepted: false })
-        .eq('query_id', queryId);
-
-      // Mark the selected answer as accepted
-      await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('answers')
-        // @ts-ignore - Types will be regenerated after migration
-        .update({ is_accepted: true })
-        .eq('id', answerId);
-
-      // Mark the query as solved
-      await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('queries')
-        // @ts-ignore - Types will be regenerated after migration
-        .update({ solved: true })
-        .eq('id', queryId);
-
-      setQueries(prev => prev.map(query => {
-        if (query.id === queryId) {
-          const updatedAnswers = query.answers.map(answer => ({
-            ...answer,
-            isAccepted: answer.id === answerId
-          }));
-          return {
-            ...query,
-            answers: updatedAnswers,
-            solved: true
-          };
-        }
-        return query;
-      }));
-    } catch (error) {
-      console.error('Error marking answer as accepted:', error);
-      throw error;
-    }
+  const markAnswerAsAccepted = (queryId: string, answerId: string) => {
+    setQueries(prev => prev.map(query => {
+      if (query.id === queryId) {
+        const updatedAnswers = query.answers.map(answer => ({
+          ...answer,
+          isAccepted: answer.id === answerId
+        }));
+        return {
+          ...query,
+          answers: updatedAnswers,
+          solved: true
+        };
+      }
+      return query;
+    }));
   };
 
-  const deleteQuery = async (queryId: string) => {
-    try {
-      // Delete all answers first (due to foreign key constraint)
-      await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('answers')
-        .delete()
-        .eq('query_id', queryId);
-
-      // Delete the query
-      const { error } = await supabase
-        // @ts-ignore - Types will be regenerated after migration
-        .from('queries')
-        .delete()
-        .eq('id', queryId);
-
-      if (error) throw error;
-
-      setQueries(prev => prev.filter(query => query.id !== queryId));
-    } catch (error) {
-      console.error('Error deleting query:', error);
-      throw error;
-    }
+  const deleteQuery = (queryId: string) => {
+    setQueries(prev => prev.filter(query => query.id !== queryId));
   };
-
-  if (loading && user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Loading queries...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <QueryContext.Provider value={{
