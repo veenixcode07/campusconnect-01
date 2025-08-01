@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { supabase, Query as SupabaseQuery, Answer as SupabaseAnswer } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 
 export interface Answer {
