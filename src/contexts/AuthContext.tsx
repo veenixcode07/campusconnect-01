@@ -18,17 +18,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check for existing session on mount
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        localStorage.removeItem('user');
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          // Load user profile when authenticated
+          loadUserProfile(session.user.id);
+        } else {
+          setUser(null);
+          localStorage.removeItem('user');
+        }
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        loadUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
+
+  const loadUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error || !profile) {
+        throw new Error('Profile not found');
+      }
+
+      const userData: User = {
+        id: profile.id,
+        sapid: profile.sapid,
+        name: profile.name,
+        role: profile.role as UserRole,
+        department: profile.department,
+        year: profile.year,
+        section: profile.section,
+        createdAt: profile.created_at
+      };
+
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+    } catch (err) {
+      console.error('Error loading profile:', err);
+      setUser(null);
+      localStorage.removeItem('user');
+    }
+  };
 
   const login = async (sapid: string, password: string) => {
     setLoading(true);

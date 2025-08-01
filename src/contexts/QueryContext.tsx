@@ -179,7 +179,7 @@ export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       // Update replies count in database
       await supabase
         .from('queries')
-        .update({ replies: supabase.sql`replies + 1` })
+        .update({ replies: queries.find(q => q.id === queryId)?.replies + 1 || 1 })
         .eq('id', queryId);
 
       setQueries(prev => prev.map(query => {
