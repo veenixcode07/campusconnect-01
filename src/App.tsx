@@ -28,7 +28,7 @@ const AuthenticatedApp = () => {
   }
 
   // Always redirect to dashboard after login
-  if (location.pathname === '/' || location.pathname === '/login') {
+  if (location.pathname === '/' || location.pathname === '/login' || location.pathname === '') {
     return <Navigate to="/dashboard" replace />;
   }
   
