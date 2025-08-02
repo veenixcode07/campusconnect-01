@@ -44,12 +44,19 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         <div className="flex items-center gap-3">
           <div className="hidden sm:block text-right">
             <p className="text-sm font-medium">{user.name}</p>
-            <div className="flex items-center gap-2">
-              <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
-                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-              </Badge>
-              {user.department && (
-                <span className="text-xs text-muted-foreground">{user.department}</span>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2">
+                <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
+                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                </Badge>
+                {user.department && (
+                  <span className="text-xs text-muted-foreground">{user.department}</span>
+                )}
+              </div>
+              {user.role === 'student' && user.section && user.rollNumber && (
+                <div className="text-xs text-muted-foreground">
+                  Class {user.section} • Roll No: {user.rollNumber}
+                </div>
               )}
             </div>
           </div>

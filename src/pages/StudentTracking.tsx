@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Search, User, TrendingUp, TrendingDown, AlertTriangle, FileText } from 'lucide-react';
 import { StudentProfileModal } from '@/components/StudentProfileModal';
+import { ContactStudentModal } from '@/components/ContactStudentModal';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +23,9 @@ export const StudentTracking: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAddNotesModalOpen, setIsAddNotesModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [studentForNotes, setStudentForNotes] = useState<any>(null);
+  const [studentForContact, setStudentForContact] = useState<any>(null);
   const [noteContent, setNoteContent] = useState('');
 
   const students = [
@@ -104,6 +107,11 @@ export const StudentTracking: React.FC = () => {
     setIsAddNotesModalOpen(true);
   };
 
+  const handleContactStudent = (student: any) => {
+    setStudentForContact(student);
+    setIsContactModalOpen(true);
+  };
+
   const handleSaveNote = () => {
     if (!noteContent.trim()) {
       toast({
@@ -123,6 +131,7 @@ export const StudentTracking: React.FC = () => {
     toast({
       title: "Success",
       description: "Note added successfully!",
+      duration: 3000,
     });
 
     setNoteContent('');
@@ -158,7 +167,6 @@ export const StudentTracking: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Student Tracking</h1>
-        <Button>Export Report</Button>
       </div>
 
       <div className="flex items-center gap-4">
@@ -229,7 +237,13 @@ export const StudentTracking: React.FC = () => {
                 >
                   View Profile
                 </Button>
-                <Button variant="outline" size="sm">Contact Student</Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleContactStudent(student)}
+                >
+                  Contact Student
+                </Button>
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -252,6 +266,18 @@ export const StudentTracking: React.FC = () => {
           onClose={() => {
             setIsProfileModalOpen(false);
             setSelectedStudent(null);
+          }}
+        />
+      )}
+
+      {/* Contact Student Modal */}
+      {studentForContact && (
+        <ContactStudentModal
+          student={studentForContact}
+          isOpen={isContactModalOpen}
+          onClose={() => {
+            setIsContactModalOpen(false);
+            setStudentForContact(null);
           }}
         />
       )}

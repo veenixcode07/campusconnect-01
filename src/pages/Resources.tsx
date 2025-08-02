@@ -61,6 +61,7 @@ export const Resources: React.FC = () => {
     toast({
       title: "Success",
       description: "Resource favorite status updated!",
+      duration: 3000,
     });
   };
 
@@ -69,6 +70,28 @@ export const Resources: React.FC = () => {
     toast({
       title: "Success",
       description: "Resource deleted successfully!",
+      duration: 3000,
+    });
+  };
+
+  const handleDownload = (resource: any) => {
+    // Create a downloadable file URL (for demo purposes)
+    const fileName = `${resource.title.replace(/\s+/g, '_')}.${resource.type}`;
+    const fileContent = `This is a sample ${resource.type.toUpperCase()} file for ${resource.title}.\n\nDescription: ${resource.description}\n\nSubject: ${resource.subject}\nUploaded by: ${resource.uploadedBy}\nUpload Date: ${resource.uploadDate}`;
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Download Started",
+      description: `Downloading ${resource.title}`,
+      duration: 3000,
     });
   };
 
@@ -108,8 +131,8 @@ export const Resources: React.FC = () => {
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <CardContent className="p-3 md:p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -161,7 +184,7 @@ export const Resources: React.FC = () => {
       </Card>
 
       {/* Resources Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {filteredResources.length === 0 ? (
           <Card className="col-span-full">
             <CardContent className="py-12 text-center">
@@ -242,7 +265,11 @@ export const Resources: React.FC = () => {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
-                  <Button className="flex-1" size="sm">
+                  <Button 
+                    className="flex-1" 
+                    size="sm"
+                    onClick={() => handleDownload(resource)}
+                  >
                     <Download className="w-4 h-4 mr-2" />
                     Download
                   </Button>
@@ -303,12 +330,40 @@ export const Resources: React.FC = () => {
                         </div>
 
                         <div className="bg-muted p-4 rounded-lg">
-                          <p className="text-sm text-muted-foreground text-center">
-                            {resource.type === 'video' ? 'Video preview would appear here' :
-                             resource.type === 'pdf' ? 'PDF preview would appear here' :
-                             resource.type === 'image' ? 'Image preview would appear here' :
-                             'File preview would appear here'}
-                          </p>
+                          {resource.type === 'pdf' && (
+                            <div className="space-y-2">
+                              <div className="h-40 bg-white border rounded flex items-center justify-center">
+                                <FileText className="w-12 h-12 text-red-500" />
+                              </div>
+                              <Button 
+                                className="w-full" 
+                                onClick={() => handleDownload(resource)}
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Download PDF
+                              </Button>
+                            </div>
+                          )}
+                          {resource.type === 'video' && (
+                            <div className="space-y-2">
+                              <div className="h-40 bg-black rounded flex items-center justify-center">
+                                <Video className="w-12 h-12 text-white" />
+                              </div>
+                              <p className="text-sm text-center text-muted-foreground">
+                                Video content preview
+                              </p>
+                            </div>
+                          )}
+                          {resource.type === 'image' && (
+                            <div className="h-40 bg-gray-100 rounded flex items-center justify-center">
+                              <Image className="w-12 h-12 text-gray-400" />
+                            </div>
+                          )}
+                          {!['pdf', 'video', 'image'].includes(resource.type) && (
+                            <div className="h-40 bg-gray-100 rounded flex items-center justify-center">
+                              <File className="w-12 h-12 text-gray-400" />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </DialogContent>

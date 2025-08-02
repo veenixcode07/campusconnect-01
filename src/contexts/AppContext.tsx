@@ -105,6 +105,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       timestamp: '2024-08-15T14:30:00Z',
       attachments: [],
       classTargets: ['Computer Science-2024-A']
+    },
+    {
+      id: '3',
+      title: 'Database Design Project',
+      description: 'Design and implement a complete database system for a library management system.',
+      subject: 'Database Management',
+      dueDate: '2024-09-20T23:59:59Z',
+      author: 'Dr. Michael Chen',
+      authorRole: 'faculty',
+      timestamp: '2024-08-18T09:00:00Z',
+      attachments: [],
+      classTargets: ['Computer Science-2024-B']
+    },
+    {
+      id: '4',
+      title: 'Operating Systems Lab',
+      description: 'Complete the process scheduling simulation lab assignment.',
+      subject: 'Operating Systems',
+      dueDate: '2024-09-12T23:59:59Z',
+      author: 'Dr. Michael Chen',
+      authorRole: 'faculty',
+      timestamp: '2024-08-16T11:30:00Z',
+      attachments: [],
+      classTargets: ['Computer Science-2024-A', 'Computer Science-2024-B']
     }
   ]);
 
@@ -130,6 +154,30 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       subject: 'Computer Science',
       category: 'exam',
       date: '2024-08-18',
+      pinned: false,
+      attachments: []
+    },
+    {
+      id: '3',
+      title: 'Class A - Lab Schedule Update',
+      content: 'Lab sessions for Computer Science A will be held in Lab 2 starting next week. Please note the room change.',
+      author: 'Dr. Sarah Faculty',
+      department: 'Computer Science',
+      subject: 'Computer Science',
+      category: 'general',
+      date: '2024-08-19',
+      pinned: false,
+      attachments: []
+    },
+    {
+      id: '4',
+      title: 'Class B - Project Submission Guidelines',
+      content: 'All project submissions for Class B students must follow the new formatting guidelines available on the portal.',
+      author: 'Dr. Michael Chen',
+      department: 'Computer Science',
+      subject: 'Computer Science',
+      category: 'general',
+      date: '2024-08-17',
       pinned: false,
       attachments: []
     }
@@ -162,6 +210,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       downloads: 28,
       likes: 8,
       tags: ['database', 'sql', 'design'],
+      favorited: false
+    },
+    {
+      id: '3',
+      title: 'Operating Systems Concepts',
+      description: 'Complete notes on operating system fundamentals and concepts',
+      type: 'pdf',
+      subject: 'Operating Systems',
+      uploadedBy: 'Dr. Michael Chen',
+      uploadDate: '2024-08-12',
+      size: '3.2 MB',
+      downloads: 62,
+      likes: 18,
+      tags: ['os', 'processes', 'memory-management'],
+      favorited: false
+    },
+    {
+      id: '4',
+      title: 'Data Structures Implementation Guide',
+      description: 'Code examples and implementations of common data structures',
+      type: 'doc',
+      subject: 'Data Structures',
+      uploadedBy: 'Dr. Sarah Faculty',
+      uploadDate: '2024-08-14',
+      size: '1.8 MB',
+      downloads: 39,
+      likes: 15,
+      tags: ['data-structures', 'implementation', 'code'],
       favorited: false
     }
   ]);

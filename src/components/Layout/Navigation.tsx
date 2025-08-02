@@ -49,8 +49,11 @@ export const Navigation: React.FC<NavigationProps> = ({ isDesktop = false, onIte
   );
 
   const handleLogout = () => {
-    logout();
-    onItemClick?.();
+    const confirmed = window.confirm('Are you sure you want to logout?');
+    if (confirmed) {
+      logout();
+      onItemClick?.();
+    }
   };
 
   return (
