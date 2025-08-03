@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Bell, 
@@ -44,7 +45,8 @@ export const Notices: React.FC = () => {
     subject: '',
     category: 'general' as 'general' | 'exam' | 'urgent',
     pinned: false,
-    attachments: [] as string[]
+    attachments: [] as string[],
+    classTargets: [] as string[]
   });
 
   const handleCreateNotice = () => {
@@ -74,7 +76,8 @@ export const Notices: React.FC = () => {
       subject: '',
       category: 'general',
       pinned: false,
-      attachments: []
+      attachments: [],
+      classTargets: []
     });
     setIsCreateModalOpen(false);
   };
@@ -85,6 +88,15 @@ export const Notices: React.FC = () => {
     setNewNotice(prev => ({
       ...prev,
       attachments: [...prev.attachments, ...fileNames]
+    }));
+  };
+
+  const handleClassToggle = (className: string) => {
+    setNewNotice(prev => ({
+      ...prev,
+      classTargets: prev.classTargets.includes(className)
+        ? prev.classTargets.filter(c => c !== className)
+        : [...prev.classTargets, className]
     }));
   };
 
@@ -227,6 +239,30 @@ export const Notices: React.FC = () => {
                       onChange={(e) => setNewNotice({...newNotice, subject: e.target.value})}
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="classTargets">Target Classes (Leave empty for all classes)</Label>
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="cs-a" 
+                        checked={newNotice.classTargets.includes('Computer Science-2024-A')}
+                        onCheckedChange={() => handleClassToggle('Computer Science-2024-A')}
+                      />
+                      <Label htmlFor="cs-a">Class A</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="cs-b" 
+                        checked={newNotice.classTargets.includes('Computer Science-2024-B')}
+                        onCheckedChange={() => handleClassToggle('Computer Science-2024-B')}
+                      />
+                      <Label htmlFor="cs-b">Class B</Label>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Select specific classes or leave empty to send to all students
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="attachments">Attachments</Label>

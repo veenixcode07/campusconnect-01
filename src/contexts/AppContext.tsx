@@ -26,6 +26,7 @@ export interface Notice {
   pinned: boolean;
   pinnedUntil?: Date;
   attachments: string[];
+  classTargets: string[]; // Added class targeting for notices
 }
 
 export interface Resource {
@@ -41,6 +42,7 @@ export interface Resource {
   likes: number;
   tags: string[];
   favorited: boolean;
+  classTargets: string[]; // Added class targeting for resources
 }
 
 export interface StudentNote {
@@ -147,7 +149,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       category: 'general',
       date: '2024-08-20',
       pinned: true,
-      attachments: []
+      attachments: [],
+      classTargets: [] // General notice for all
     },
     {
       id: '2',
@@ -159,7 +162,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       category: 'exam',
       date: '2024-08-18',
       pinned: false,
-      attachments: []
+      attachments: [],
+      classTargets: [] // General notice for all
     },
     {
       id: '3',
@@ -171,7 +175,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       category: 'general',
       date: '2024-08-19',
       pinned: false,
-      attachments: []
+      attachments: [],
+      classTargets: ['Computer Science-2024-A'] // Class A specific
     },
     {
       id: '4',
@@ -183,7 +188,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       category: 'general',
       date: '2024-08-17',
       pinned: false,
-      attachments: []
+      attachments: [],
+      classTargets: ['Computer Science-2024-B'] // Class B specific
     }
   ]);
 
@@ -200,7 +206,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       downloads: 45,
       likes: 12,
       tags: ['algorithms', 'data-structures', 'programming'],
-      favorited: false
+      favorited: false,
+      classTargets: ['Computer Science-2024-A'] // Class A specific
     },
     {
       id: '2',
@@ -214,7 +221,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       downloads: 28,
       likes: 8,
       tags: ['database', 'sql', 'design'],
-      favorited: false
+      favorited: false,
+      classTargets: [] // General resource for all
     },
     {
       id: '3',
@@ -228,7 +236,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       downloads: 62,
       likes: 18,
       tags: ['os', 'processes', 'memory-management'],
-      favorited: false
+      favorited: false,
+      classTargets: ['Computer Science-2024-B'] // Class B specific
     },
     {
       id: '4',
@@ -242,7 +251,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       downloads: 39,
       likes: 15,
       tags: ['data-structures', 'implementation', 'code'],
-      favorited: false
+      favorited: false,
+      classTargets: ['Computer Science-2024-A', 'Computer Science-2024-B'] // Both classes
     }
   ]);
 
@@ -347,13 +357,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const getFilteredNotices = () => {
     if (!user) return notices;
     
+    const userClass = `${user.department}-${user.year}-${user.section}`;
+    
     if (user.role === 'student' || user.role === 'admin') {
       // Students and student admins see general notices + their class-specific notices
       return notices.filter(notice => 
-        notice.category === 'general' || 
-        notice.subject === 'General' ||
-        notice.content.toLowerCase().includes(`class ${user.section?.toLowerCase()}`) ||
-        notice.department === user.department
+        notice.classTargets.length === 0 || // General notices (no class targeting)
+        notice.classTargets.includes(userClass) // Their specific class
       );
     } else if (user.role === 'faculty') {
       // Faculty can see all notices
@@ -366,12 +376,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const getFilteredResources = () => {
     if (!user) return resources;
     
+    const userClass = `${user.department}-${user.year}-${user.section}`;
+    
     if (user.role === 'student' || user.role === 'admin') {
-      // Students and student admins see resources relevant to their department/subjects
+      // Students and student admins see general resources + their class-specific resources
       return resources.filter(resource => 
-        resource.subject === user.department ||
-        resource.subject === 'General' ||
-        resource.subject === 'Computer Science' // General CS resources
+        resource.classTargets.length === 0 || // General resources (no class targeting)
+        resource.classTargets.includes(userClass) // Their specific class
       );
     } else if (user.role === 'faculty') {
       // Faculty can see all resources
