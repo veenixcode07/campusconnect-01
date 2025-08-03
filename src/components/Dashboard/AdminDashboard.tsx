@@ -25,8 +25,13 @@ interface AdminDashboardProps {
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
-  const { assignments, notices, resources } = useApp();
+  const { getFilteredAssignments, getFilteredNotices, getFilteredResources } = useApp();
   const { queries } = useQuery();
+  
+  // Get filtered data based on user's class and role
+  const assignments = getFilteredAssignments();
+  const notices = getFilteredNotices();
+  const resources = getFilteredResources();
 
   // Mock data - in real app this would come from API
   const attendanceData = {

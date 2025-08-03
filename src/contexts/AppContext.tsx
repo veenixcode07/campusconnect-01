@@ -56,6 +56,10 @@ interface AppContextType {
   notices: Notice[];
   resources: Resource[];
   studentNotes: StudentNote[];
+  // Filtered data based on user role and class
+  getFilteredAssignments: () => Assignment[];
+  getFilteredNotices: () => Notice[];
+  getFilteredResources: () => Resource[];
   addAssignment: (assignment: Omit<Assignment, 'id' | 'timestamp'>) => void;
   addNotice: (notice: Omit<Notice, 'id' | 'date'>) => void;
   toggleResourceFavorite: (resourceId: string) => void;
@@ -319,6 +323,64 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setResources(prev => prev.filter(resource => resource.id !== resourceId));
   };
 
+  // Role-based filtering functions
+  const getFilteredAssignments = () => {
+    if (!user) return assignments;
+    
+    const userClass = `${user.department}-${user.year}-${user.section}`;
+    
+    if (user.role === 'student' || user.role === 'admin') {
+      // Students and student admins see only assignments for their class + general ones
+      return assignments.filter(assignment => 
+        assignment.classTargets.includes(userClass) || 
+        assignment.classTargets.length === 0 ||
+        assignment.classTargets.some(target => target.includes('general'))
+      );
+    } else if (user.role === 'faculty') {
+      // Faculty can see all assignments but prioritize ones they created
+      return assignments;
+    }
+    
+    return assignments;
+  };
+
+  const getFilteredNotices = () => {
+    if (!user) return notices;
+    
+    if (user.role === 'student' || user.role === 'admin') {
+      // Students and student admins see general notices + their class-specific notices
+      return notices.filter(notice => 
+        notice.category === 'general' || 
+        notice.subject === 'General' ||
+        notice.content.toLowerCase().includes(`class ${user.section?.toLowerCase()}`) ||
+        notice.department === user.department
+      );
+    } else if (user.role === 'faculty') {
+      // Faculty can see all notices
+      return notices;
+    }
+    
+    return notices;
+  };
+
+  const getFilteredResources = () => {
+    if (!user) return resources;
+    
+    if (user.role === 'student' || user.role === 'admin') {
+      // Students and student admins see resources relevant to their department/subjects
+      return resources.filter(resource => 
+        resource.subject === user.department ||
+        resource.subject === 'General' ||
+        resource.subject === 'Computer Science' // General CS resources
+      );
+    } else if (user.role === 'faculty') {
+      // Faculty can see all resources
+      return resources;
+    }
+    
+    return resources;
+  };
+
   // Auto-unpin expired notices
   useEffect(() => {
     const checkExpiredPins = () => {
@@ -341,6 +403,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       notices,
       resources,
       studentNotes,
+      getFilteredAssignments,
+      getFilteredNotices,
+      getFilteredResources,
       addAssignment,
       addNotice,
       toggleResourceFavorite,

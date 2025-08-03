@@ -16,8 +16,11 @@ import { useToast } from '@/hooks/use-toast';
 
 export const Assignments: React.FC = () => {
   const { user } = useAuth();
-  const { assignments, addAssignment, deleteAssignment } = useApp();
+  const { getFilteredAssignments, addAssignment, deleteAssignment } = useApp();
   const { toast } = useToast();
+  
+  // Get filtered assignments based on user's role and class
+  const assignments = getFilteredAssignments();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newAssignment, setNewAssignment] = useState({
     title: '',

@@ -26,8 +26,11 @@ import { useToast } from '@/hooks/use-toast';
 
 export const Resources: React.FC = () => {
   const { user } = useAuth();
-  const { resources, toggleResourceFavorite, deleteResource } = useApp();
+  const { getFilteredResources, toggleResourceFavorite, deleteResource } = useApp();
   const { toast } = useToast();
+  
+  // Get filtered resources based on user's role and class
+  const resources = getFilteredResources();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');

@@ -25,8 +25,11 @@ import { useToast } from '@/hooks/use-toast';
 
 export const Notices: React.FC = () => {
   const { user } = useAuth();
-  const { notices, addNotice, pinNotice, unpinNotice } = useApp();
+  const { getFilteredNotices, addNotice, pinNotice, unpinNotice } = useApp();
   const { toast } = useToast();
+  
+  // Get filtered notices based on user's role and class
+  const notices = getFilteredNotices();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
