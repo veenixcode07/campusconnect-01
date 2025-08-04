@@ -15,6 +15,7 @@ export interface Query {
   title: string;
   content: string;
   author: string;
+  authorClass: string;
   subject: string;
   replies: number;
   likes: number;
@@ -26,7 +27,8 @@ export interface Query {
 
 interface QueryContextType {
   queries: Query[];
-  addQuery: (query: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy'>) => void;
+  filteredQueries: Query[];
+  addQuery: (query: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy' | 'authorClass'>) => void;
   addAnswer: (queryId: string, answer: Omit<Answer, 'id' | 'timestamp'>) => void;
   likeQuery: (queryId: string, userId: string) => void;
   markAnswerAsAccepted: (queryId: string, answerId: string) => void;
@@ -53,6 +55,7 @@ export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       title: 'Help with Binary Tree Implementation',
       content: 'I am having trouble implementing a binary tree in C++. Can someone help me with the insertion logic?',
       author: 'John Student',
+      authorClass: 'A',
       subject: 'Computer Science',
       replies: 1,
       likes: 3,
@@ -74,13 +77,14 @@ export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       id: '2',
       title: 'SQL Join Queries Confusion',
       content: 'Can someone explain the difference between INNER JOIN and LEFT JOIN with examples?',
-      author: 'John Student',
+      author: 'Emma Wilson',
+      authorClass: 'B',
       subject: 'Computer Science',
       replies: 1,
       likes: 5,
       solved: true,
       timestamp: '2024-08-19T15:30:00Z',
-      likedBy: ['FAC001', 'STU003', 'STU004', 'ADM001', 'STU005'],
+      likedBy: ['FAC001', 'STU003', 'STU004', 'ADM002', 'STU005'],
       answers: [
         {
           id: 'a2',
@@ -94,7 +98,24 @@ export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   ]);
 
-  const addQuery = (newQuery: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy'>) => {
+  // Filter queries based on user's class
+  const filteredQueries = queries.filter(query => {
+    if (!user) return [];
+    
+    // Faculty can see all queries
+    if (user.role === 'faculty') {
+      return true;
+    }
+    
+    // Students and admins can only see queries from their own class
+    if (user.role === 'student' || user.role === 'admin') {
+      return query.authorClass === user.section;
+    }
+    
+    return false;
+  });
+
+  const addQuery = (newQuery: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy' | 'authorClass'>) => {
     const query: Query = {
       ...newQuery,
       id: Math.random().toString(36).substr(2, 9),
@@ -103,7 +124,8 @@ export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       solved: false,
       timestamp: new Date().toISOString(),
       answers: [],
-      likedBy: []
+      likedBy: [],
+      authorClass: user?.section || 'A' // Default to A if no section
     };
     setQueries(prev => [query, ...prev]);
   };
@@ -171,6 +193,7 @@ export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   return (
     <QueryContext.Provider value={{
       queries,
+      filteredQueries,
       addQuery,
       addAnswer,
       likeQuery,

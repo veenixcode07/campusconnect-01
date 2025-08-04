@@ -97,8 +97,8 @@ export const LoginForm: React.FC = () => {
               </div>
               <div>
                 <p><strong>Admin:</strong></p>
-                <p>ADM001 / admin123 (Admin User)</p>
-                <p>ADM002 / admin123 (Sarah Admin)</p>
+                <p>ADM001 / admin123 (Alex Admin - Class A)</p>
+                <p>ADM002 / admin123 (Sarah Admin - Class B)</p>
               </div>
             </div>
           </div>
