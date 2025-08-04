@@ -45,8 +45,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         { sapid: 'STU002', password: 'password123', name: 'Emma Wilson', role: 'student' as UserRole, department: 'Computer Science', year: '2024', section: 'B', rollNumber: 'CS24002' },
         { sapid: 'FAC001', password: 'faculty123', name: 'Dr. Sarah Faculty', role: 'faculty' as UserRole, department: 'Computer Science' },
         { sapid: 'FAC002', password: 'faculty123', name: 'Dr. Michael Chen', role: 'faculty' as UserRole, department: 'Computer Science' },
-        { sapid: 'ADM001', password: 'admin123', name: 'Admin User', role: 'admin' as UserRole, department: 'Administration' },
-        { sapid: 'ADM002', password: 'admin123', name: 'Sarah Admin', role: 'admin' as UserRole, department: 'Computer Science' }
+        { sapid: 'ADM001', password: 'admin123', name: 'Alex Admin', role: 'admin' as UserRole, department: 'Computer Science', year: '2024', section: 'A' },
+        { sapid: 'ADM002', password: 'admin123', name: 'Sarah Admin', role: 'admin' as UserRole, department: 'Computer Science', year: '2024', section: 'B' }
       ];
 
       const credential = validCredentials.find(c => c.sapid === sapid && c.password === password);
