@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,11 +26,13 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'react-router-dom';
 
 export const Resources: React.FC = () => {
   const { user } = useAuth();
   const { getFilteredResources, toggleResourceFavorite, deleteResource } = useApp();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Get filtered resources based on user's role and class
   const resources = getFilteredResources();
@@ -48,6 +50,16 @@ export const Resources: React.FC = () => {
     tags: [] as string[],
     classTargets: [] as string[]
   });
+
+  // Check URL params to auto-open upload dialog
+  useEffect(() => {
+    if (searchParams.get('action') === 'upload') {
+      setIsUploadDialogOpen(true);
+      // Remove the search param after opening
+      searchParams.delete('action');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
   const [tagInput, setTagInput] = useState('');
 
   const getFileIcon = (type: string) => {

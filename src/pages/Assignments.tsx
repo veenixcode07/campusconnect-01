@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,13 +11,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useState } from 'react';
+
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'react-router-dom';
 
 export const Assignments: React.FC = () => {
   const { user } = useAuth();
   const { getFilteredAssignments, addAssignment, deleteAssignment } = useApp();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Get filtered assignments based on user's role and class
   const assignments = getFilteredAssignments();
@@ -30,6 +32,16 @@ export const Assignments: React.FC = () => {
     attachments: [] as string[],
     classTargets: [] as string[]
   });
+
+  // Check URL params to auto-open create dialog
+  useEffect(() => {
+    if (searchParams.get('action') === 'create') {
+      setIsCreateDialogOpen(true);
+      // Remove the search param after opening
+      searchParams.delete('action');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleCreateAssignment = () => {
     if (!newAssignment.title.trim() || !newAssignment.subject.trim() || 

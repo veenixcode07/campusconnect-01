@@ -66,10 +66,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   }));
 
   const quickActions = [
-    { name: 'Post Notice', href: '/notices', icon: MessageSquare, color: 'bg-blue-100 text-blue-600' },
-    { name: 'Upload Resource', href: '/resources', icon: BookOpen, color: 'bg-green-100 text-green-600' },
+    { name: 'Post Notice', href: '/notices?action=create', icon: MessageSquare, color: 'bg-blue-100 text-blue-600' },
+    { name: 'Upload Resource', href: '/resources?action=upload', icon: BookOpen, color: 'bg-green-100 text-green-600' },
     { name: 'View Queries', href: '/queries', icon: Users, color: 'bg-purple-100 text-purple-600' },
-    { name: 'Add Assignment', href: '/assignments', icon: FileText, color: 'bg-orange-100 text-orange-600' },
+    { name: 'Add Assignment', href: '/assignments?action=create', icon: FileText, color: 'bg-orange-100 text-orange-600' },
   ];
 
   const adminStats = {

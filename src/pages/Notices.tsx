@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,11 +23,13 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'react-router-dom';
 
 export const Notices: React.FC = () => {
   const { user } = useAuth();
   const { getFilteredNotices, addNotice, pinNotice, unpinNotice } = useApp();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Get filtered notices based on user's role and class
   const notices = getFilteredNotices();
@@ -48,6 +50,16 @@ export const Notices: React.FC = () => {
     attachments: [] as string[],
     classTargets: [] as string[]
   });
+
+  // Check URL params to auto-open create dialog
+  useEffect(() => {
+    if (searchParams.get('action') === 'create') {
+      setIsCreateModalOpen(true);
+      // Remove the search param after opening
+      searchParams.delete('action');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleCreateNotice = () => {
     if (!newNotice.title.trim() || !newNotice.content.trim()) {
