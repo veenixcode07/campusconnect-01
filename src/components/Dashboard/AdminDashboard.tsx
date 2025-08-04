@@ -26,7 +26,7 @@ interface AdminDashboardProps {
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const { getFilteredAssignments, getFilteredNotices, getFilteredResources } = useApp();
-  const { queries } = useQuery();
+  const { filteredQueries } = useQuery();
   
   // Get filtered data based on user's class and role
   const assignments = getFilteredAssignments();
@@ -57,11 +57,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     dueDate: assignment.dueDate
   }));
 
-  const pendingQueries = queries.filter(query => query.author === user.name).slice(0, 2).map(query => ({
+  const pendingQueries = filteredQueries.slice(0, 3).map(query => ({
     id: query.id,
     subject: query.subject,
     question: query.title,
-    status: query.solved ? 'answered' : 'pending'
+    status: query.solved ? 'answered' : 'pending',
+    author: query.author
   }));
 
   const quickActions = [
@@ -151,7 +152,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
             </div>
             <div>
                <p className="text-sm text-muted-foreground">Pending Queries</p>
-               <p className="text-xl font-bold">{queries.filter(q => !q.solved).length}</p>
+               <p className="text-xl font-bold">{filteredQueries.filter(q => !q.solved).length}</p>
             </div>
           </CardContent>
         </Card>
@@ -267,23 +268,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         </Card>
 
         {/* Query Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Queries</CardTitle>
-            <CardDescription>Your questions and their status</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {pendingQueries.map((query) => (
-              <div key={query.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{query.question}</p>
-                  <p className="text-xs text-muted-foreground">{query.subject}</p>
-                </div>
-                <Badge variant={query.status === 'answered' ? 'default' : 'secondary'}>
-                  {query.status}
-                </Badge>
-              </div>
-            ))}
+         <Card>
+           <CardHeader>
+             <CardTitle>Recent Queries from Class {user.section}</CardTitle>
+             <CardDescription>Questions from students in your class</CardDescription>
+           </CardHeader>
+           <CardContent className="space-y-3">
+             {pendingQueries.length === 0 ? (
+               <p className="text-sm text-muted-foreground text-center py-4">
+                 No queries from Class {user.section} students yet.
+               </p>
+             ) : (
+               pendingQueries.map((query) => (
+                 <div key={query.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                   <div className="flex-1">
+                     <p className="text-sm font-medium">{query.question}</p>
+                     <p className="text-xs text-muted-foreground">{query.subject} • by {query.author}</p>
+                   </div>
+                   <Badge variant={query.status === 'answered' ? 'default' : 'secondary'}>
+                     {query.status}
+                   </Badge>
+                 </div>
+               ))
+             )}
             <Button asChild variant="outline" className="w-full">
               <Link to="/queries">View Query Forum</Link>
             </Button>
