@@ -10,11 +10,217 @@ export type Database = {
   // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assignments: {
+        Row: {
+          attachments: string[] | null
+          author: string | null
+          author_role: string | null
+          class_targets: string[] | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string | null
+          id: string
+          subject: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: string[] | null
+          author?: string | null
+          author_role?: string | null
+          class_targets?: string[] | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          subject: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: string[] | null
+          author?: string | null
+          author_role?: string | null
+          class_targets?: string[] | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          subject?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notices: {
+        Row: {
+          attachments: string[] | null
+          author: string | null
+          author_id: string
+          category: string
+          content: string
+          created_at: string
+          department: string | null
+          id: string
+          pinned: boolean
+          pinned_until: string | null
+          subject: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: string[] | null
+          author?: string | null
+          author_id: string
+          category?: string
+          content: string
+          created_at?: string
+          department?: string | null
+          id?: string
+          pinned?: boolean
+          pinned_until?: string | null
+          subject?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: string[] | null
+          author?: string | null
+          author_id?: string
+          category?: string
+          content?: string
+          created_at?: string
+          department?: string | null
+          id?: string
+          pinned?: boolean
+          pinned_until?: string | null
+          subject?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          department: string | null
+          id: string
+          name: string
+          role: string
+          sapid: string | null
+          section: string | null
+          updated_at: string
+          user_id: string
+          year: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string | null
+          id?: string
+          name: string
+          role: string
+          sapid?: string | null
+          section?: string | null
+          updated_at?: string
+          user_id: string
+          year?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string | null
+          id?: string
+          name?: string
+          role?: string
+          sapid?: string | null
+          section?: string | null
+          updated_at?: string
+          user_id?: string
+          year?: string | null
+        }
+        Relationships: []
+      }
+      resources: {
+        Row: {
+          created_at: string
+          description: string | null
+          downloads: number
+          id: string
+          likes: number
+          size: string
+          subject: string
+          tags: string[] | null
+          title: string
+          type: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          downloads?: number
+          id?: string
+          likes?: number
+          size?: string
+          subject: string
+          tags?: string[] | null
+          title: string
+          type: string
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          downloads?: number
+          id?: string
+          likes?: number
+          size?: string
+          subject?: string
+          tags?: string[] | null
+          title?: string
+          type?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      student_notes: {
+        Row: {
+          author: string
+          created_at: string
+          id: string
+          note: string
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          author: string
+          created_at?: string
+          id?: string
+          note: string
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string
+          created_at?: string
+          id?: string
+          note?: string
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
