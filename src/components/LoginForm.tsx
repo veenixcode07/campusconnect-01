@@ -6,16 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const LoginForm: React.FC = () => {
   const [sapid, setSapid] = useState('');
   const [password, setPassword] = useState('');
-  const { login, loading, error } = useAuth();
+const { login, loading, error } = useAuth();
+const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await login(sapid, password);
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       // Clear fields on error
       setSapid('');
