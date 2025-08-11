@@ -149,6 +149,98 @@ export type Database = {
         }
         Relationships: []
       }
+      queries: {
+        Row: {
+          author: string | null
+          author_class: string | null
+          content: string
+          created_at: string
+          id: string
+          liked_by: string[]
+          likes: number
+          replies: number
+          solved: boolean
+          subject: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author?: string | null
+          author_class?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          liked_by?: string[]
+          likes?: number
+          replies?: number
+          solved?: boolean
+          subject: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string | null
+          author_class?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          liked_by?: string[]
+          likes?: number
+          replies?: number
+          solved?: boolean
+          subject?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      query_answers: {
+        Row: {
+          author: string | null
+          author_role: string | null
+          content: string
+          created_at: string
+          id: string
+          is_accepted: boolean
+          query_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          author?: string | null
+          author_role?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_accepted?: boolean
+          query_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          author?: string | null
+          author_role?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_accepted?: boolean
+          query_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "query_answers_query_id_fkey"
+            columns: ["query_id"]
+            isOneToOne: false
+            referencedRelation: "queries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resources: {
         Row: {
           created_at: string
