@@ -59,6 +59,91 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance_logs: {
+        Row: {
+          created_at: string
+          id: string
+          log_date: string
+          present: boolean
+          student_id: string
+          subject: string
+          time: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          log_date: string
+          present?: boolean
+          student_id: string
+          subject: string
+          time?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          log_date?: string
+          present?: boolean
+          student_id?: string
+          subject?: string
+          time?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_logs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance_records: {
+        Row: {
+          attended_classes: number
+          created_at: string
+          id: string
+          last_updated: string
+          recent_pattern: string[]
+          student_id: string
+          subject: string
+          total_classes: number
+          updated_at: string
+        }
+        Insert: {
+          attended_classes?: number
+          created_at?: string
+          id?: string
+          last_updated?: string
+          recent_pattern?: string[]
+          student_id: string
+          subject: string
+          total_classes?: number
+          updated_at?: string
+        }
+        Update: {
+          attended_classes?: number
+          created_at?: string
+          id?: string
+          last_updated?: string
+          recent_pattern?: string[]
+          student_id?: string
+          subject?: string
+          total_classes?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notices: {
         Row: {
           attachments: string[] | null
@@ -309,6 +394,54 @@ export type Database = {
           id?: string
           note?: string
           student_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      students: {
+        Row: {
+          attendance_percentage: number | null
+          average_grade: number | null
+          created_at: string
+          email: string | null
+          id: string
+          last_activity: string | null
+          name: string
+          phone: string | null
+          sapid: string
+          section: string | null
+          status: string | null
+          trend: string | null
+          updated_at: string
+        }
+        Insert: {
+          attendance_percentage?: number | null
+          average_grade?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_activity?: string | null
+          name: string
+          phone?: string | null
+          sapid: string
+          section?: string | null
+          status?: string | null
+          trend?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attendance_percentage?: number | null
+          average_grade?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          last_activity?: string | null
+          name?: string
+          phone?: string | null
+          sapid?: string
+          section?: string | null
+          status?: string | null
+          trend?: string | null
           updated_at?: string
         }
         Relationships: []
