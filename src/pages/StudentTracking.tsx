@@ -122,11 +122,7 @@ export const StudentTracking: React.FC = () => {
       return;
     }
 
-    addStudentNote({
-      studentId: studentForNotes.id.toString(),
-      note: noteContent,
-      author: user?.name || 'Unknown Faculty'
-    });
+    addStudentNote(studentForNotes.id.toString(), noteContent);
 
     toast({
       title: "Success",
@@ -318,7 +314,7 @@ export const StudentTracking: React.FC = () => {
                     getStudentNotes(studentForNotes.id.toString(), user?.name).map((note) => (
                       <div key={note.id} className="p-2 bg-muted rounded-md">
                         <div className="text-sm text-muted-foreground mb-1">
-                          {note.author} - {new Date(note.timestamp).toLocaleString()}
+                          {note.author} - {new Date(note.createdAt).toLocaleString()}
                         </div>
                         <div className="text-sm">{note.note}</div>
                       </div>

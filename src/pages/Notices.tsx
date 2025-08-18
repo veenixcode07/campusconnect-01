@@ -131,7 +131,7 @@ export const Notices: React.FC = () => {
       const hours = parseInt(pinDuration);
       const pinUntil = new Date(Date.now() + hours * 60 * 60 * 1000);
       
-      pinNotice(selectedNoticeForPin.id, pinUntil);
+      pinNotice(selectedNoticeForPin.id, pinUntil.toISOString());
       
       toast({
         title: "Success",
@@ -183,7 +183,7 @@ export const Notices: React.FC = () => {
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
     // Then by date (newest first)
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   const canPost = user?.role === 'admin' || user?.role === 'faculty';
@@ -381,7 +381,7 @@ export const Notices: React.FC = () => {
                       <span>•</span>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {new Date(notice.date).toLocaleDateString()}
+                        {new Date(notice.createdAt).toLocaleDateString()}
                       </div>
                       <span>•</span>
                       <span>{notice.department}</span>

@@ -227,7 +227,7 @@ export const Assignments: React.FC = () => {
                   </CardDescription>
                 </div>
                 <div className="text-right text-sm text-muted-foreground">
-                  <p>Created: {new Date(assignment.timestamp).toLocaleDateString()}</p>
+                  <p>Created: {new Date(assignment.createdAt).toLocaleDateString()}</p>
                   <div className="flex gap-1 mt-1">
                     {assignment.classTargets.map(target => (
                       <Badge key={target} variant="secondary" className="text-xs">

@@ -30,7 +30,7 @@ import { useSearchParams } from 'react-router-dom';
 
 export const Resources: React.FC = () => {
   const { user } = useAuth();
-  const { getFilteredResources, toggleResourceFavorite, deleteResource } = useApp();
+  const { getFilteredResources, deleteResource } = useApp();
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   
@@ -85,10 +85,9 @@ export const Resources: React.FC = () => {
   };
 
   const handleToggleFavorite = (resourceId: string) => {
-    toggleResourceFavorite(resourceId);
     toast({
-      title: "Success",
-      description: "Resource favorite status updated!",
+      title: "Info",
+      description: "Favorites feature coming soon!",
       duration: 3000,
     });
   };
@@ -134,7 +133,7 @@ export const Resources: React.FC = () => {
                          resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesSubject = selectedSubject === 'all' || resource.subject === selectedSubject;
     const matchesType = selectedType === 'all' || resource.type === selectedType;
-    const matchesFavorites = !showFavorites || resource.favorited;
+    const matchesFavorites = !showFavorites;
     
     return matchesSearch && matchesSubject && matchesType && matchesFavorites;
   });
@@ -472,7 +471,7 @@ export const Resources: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    {new Date(resource.uploadDate).toLocaleDateString()}
+                    {new Date(resource.createdAt).toLocaleDateString()}
                   </div>
                 </div>
 
@@ -550,7 +549,7 @@ export const Resources: React.FC = () => {
                               <div className="text-sm text-muted-foreground">Likes</div>
                             </div>
                             <div>
-                              <div className="text-2xl font-bold text-primary">{new Date(resource.uploadDate).toLocaleDateString()}</div>
+                              <div className="text-2xl font-bold text-primary">{new Date(resource.createdAt).toLocaleDateString()}</div>
                               <div className="text-sm text-muted-foreground">Upload Date</div>
                             </div>
                           </div>
@@ -600,7 +599,7 @@ export const Resources: React.FC = () => {
                     size="sm"
                     onClick={() => handleToggleFavorite(resource.id)}
                   >
-                    <Heart className={`w-4 h-4 ${resource.favorited ? 'fill-red-500 text-red-500' : ''}`} />
+                    <Heart className="w-4 h-4" />
                   </Button>
                 </div>
               </CardContent>

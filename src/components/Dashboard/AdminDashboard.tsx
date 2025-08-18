@@ -46,7 +46,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const recentNotices = notices.slice(0, 3).map(notice => ({
     id: notice.id,
     title: notice.title,
-    date: notice.date,
+    date: notice.createdAt,
     urgent: notice.category === 'urgent'
   }));
 
