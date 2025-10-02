@@ -3,26 +3,73 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 export const LoginForm: React.FC = () => {
-  const [sapid, setSapid] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-const { login, loading, error } = useAuth();
-const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [sapid, setSapid] = useState('');
+  const [signUpLoading, setSignUpLoading] = useState(false);
+  const { login, loading, error } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(sapid, password);
+      await login(email, password);
       navigate('/dashboard', { replace: true });
     } catch (error) {
-      // Clear fields on error
-      setSapid('');
+      setEmail('');
       setPassword('');
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSignUpLoading(true);
+    
+    try {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            name,
+            sapid,
+            role: 'student'
+          }
+        }
+      });
+
+      if (signUpError) throw signUpError;
+
+      toast({
+        title: "Sign up successful",
+        description: "Please check your email to verify your account.",
+      });
+      
+      // Clear form
+      setEmail('');
+      setPassword('');
+      setName('');
+      setSapid('');
+    } catch (error) {
+      toast({
+        title: "Sign up failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setSignUpLoading(false);
     }
   };
 
@@ -41,70 +88,123 @@ const handleSubmit = async (e: React.FormEvent) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="sapid">SAPID</Label>
-              <Input
-                id="sapid"
-                type="text"
-                placeholder="Enter your SAPID"
-                value={sapid}
-                onChange={(e) => setSapid(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </div>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
             
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+            <TabsContent value="login">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+                
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                'Sign In'
-              )}
-            </Button>
-          </form>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign In'
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="signup">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    disabled={signUpLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-sapid">SAP ID</Label>
+                  <Input
+                    id="signup-sapid"
+                    type="text"
+                    placeholder="Enter your SAP ID"
+                    value={sapid}
+                    onChange={(e) => setSapid(e.target.value)}
+                    required
+                    disabled={signUpLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={signUpLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="Create a password (min. 6 characters)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    disabled={signUpLoading}
+                  />
+                </div>
 
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm">
-            <p className="font-medium mb-2">Demo Accounts:</p>
-            <div className="space-y-2 text-xs">
-              <div>
-                <p><strong>Students:</strong></p>
-                <p>STU001 / password123 (John Student - Class A)</p>
-                <p>STU002 / password123 (Emma Wilson - Class B)</p>
-              </div>
-              <div>
-                <p><strong>Faculty:</strong></p>
-                <p>FAC001 / faculty123 (Dr. Sarah Faculty)</p>
-                <p>FAC002 / faculty123 (Dr. Michael Chen)</p>
-              </div>
-              <div>
-                <p><strong>Admin:</strong></p>
-                <p>ADM001 / admin123 (Alex Admin - Class A)</p>
-                <p>ADM002 / admin123 (Sarah Admin - Class B)</p>
-              </div>
-            </div>
-          </div>
+                <Button type="submit" className="w-full" disabled={signUpLoading}>
+                  {signUpLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    'Sign Up'
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

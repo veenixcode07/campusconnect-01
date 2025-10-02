@@ -1,9 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthState, UserRole } from '../types/auth';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { User, AuthState } from '../types/auth';
 
 interface AuthContextType extends AuthState {
-  login: (sapid: string, password: string) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  session: Session | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -18,58 +21,95 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check for existing session on mount
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        localStorage.removeItem('user');
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        
+        if (session?.user) {
+          // Fetch user profile data
+          setTimeout(() => {
+            fetchUserProfile(session.user.id);
+          }, 0);
+        } else {
+          setUser(null);
+        }
+        
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (sapid: string, password: string) => {
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Fetch user role from user_roles table
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+
+      if (roleError) throw roleError;
+
+      const userData: User = {
+        id: userId,
+        sapid: profile.sapid || '',
+        name: profile.name || '',
+        role: roleData.role,
+        department: profile.department,
+        year: profile.year,
+        section: profile.section,
+        rollNumber: profile.sapid,
+        createdAt: profile.created_at
+      };
+
+      setUser(userData);
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      setError('Failed to load user profile');
+    }
+  };
+
+  const login = async (email: string, password: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      // Demo authentication logic
-      const validCredentials = [
-        { sapid: 'STU001', password: 'password123', name: 'John Student', role: 'student' as UserRole, department: 'Computer Science', year: '2024', section: 'A', rollNumber: 'CS24001' },
-        { sapid: 'STU002', password: 'password123', name: 'Emma Wilson', role: 'student' as UserRole, department: 'Computer Science', year: '2024', section: 'B', rollNumber: 'CS24002' },
-        { sapid: 'FAC001', password: 'faculty123', name: 'Dr. Sarah Faculty', role: 'faculty' as UserRole, department: 'Computer Science' },
-        { sapid: 'FAC002', password: 'faculty123', name: 'Dr. Michael Chen', role: 'faculty' as UserRole, department: 'Computer Science' },
-        { sapid: 'ADM001', password: 'admin123', name: 'Alex Admin', role: 'admin' as UserRole, department: 'Computer Science', year: '2024', section: 'A' },
-        { sapid: 'ADM002', password: 'admin123', name: 'Sarah Admin', role: 'admin' as UserRole, department: 'Computer Science', year: '2024', section: 'B' }
-      ];
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      const credential = validCredentials.find(c => c.sapid === sapid && c.password === password);
+      if (signInError) throw signInError;
       
-      if (!credential) {
-        throw new Error('Invalid credentials');
+      if (data.user) {
+        await fetchUserProfile(data.user.id);
       }
-
-      // Create user object directly for demo
-      const userData: User = {
-        id: `${credential.sapid}-id`,
-        sapid: credential.sapid,
-        name: credential.name,
-        role: credential.role,
-        department: credential.department,
-        year: credential.year,
-        section: credential.section,
-        rollNumber: credential.rollNumber,
-        createdAt: new Date().toISOString()
-      };
-
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during login';
       setError(errorMessage);
@@ -79,14 +119,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      setUser(null);
+      setSession(null);
+    } catch (err) {
+      console.error('Error logging out:', err);
+      throw err;
+    }
   };
 
   return (
     <AuthContext.Provider value={{
       user,
+      session,
       loading,
       error,
       login,
