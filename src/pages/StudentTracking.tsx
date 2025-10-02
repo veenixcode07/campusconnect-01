@@ -13,6 +13,7 @@ import { ContactStudentModal } from '@/components/ContactStudentModal';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { studentNoteSchema } from '@/lib/validation';
 
 export const StudentTracking: React.FC = () => {
   const { addStudentNote, getStudentNotes } = useApp();
@@ -113,26 +114,38 @@ export const StudentTracking: React.FC = () => {
   };
 
   const handleSaveNote = () => {
-    if (!noteContent.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a note before saving.",
-        variant: "destructive"
+    try {
+      // Validate input
+      const validatedData = studentNoteSchema.parse({
+        note: noteContent
       });
-      return;
+
+      addStudentNote(studentForNotes.id.toString(), validatedData.note);
+
+      toast({
+        title: "Success",
+        description: "Note added successfully!",
+        duration: 3000,
+      });
+
+      setNoteContent('');
+      setIsAddNotesModalOpen(false);
+      setStudentForNotes(null);
+    } catch (error: any) {
+      if (error.errors) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0]?.message || "Invalid input",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to save note",
+          variant: "destructive"
+        });
+      }
     }
-
-    addStudentNote(studentForNotes.id.toString(), noteContent);
-
-    toast({
-      title: "Success",
-      description: "Note added successfully!",
-      duration: 3000,
-    });
-
-    setNoteContent('');
-    setIsAddNotesModalOpen(false);
-    setStudentForNotes(null);
   };
 
   const getStatusColor = (status: string) => {

@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'react-router-dom';
+import { noticeSchema } from '@/lib/validation';
 
 export const Notices: React.FC = () => {
   const { user } = useAuth();
@@ -62,36 +63,55 @@ export const Notices: React.FC = () => {
   }, [searchParams, setSearchParams]);
 
   const handleCreateNotice = () => {
-    if (!newNotice.title.trim() || !newNotice.content.trim()) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
+    try {
+      // Validate input
+      const validatedData = noticeSchema.parse({
+        title: newNotice.title,
+        content: newNotice.content,
+        subject: newNotice.subject,
+        category: newNotice.category
       });
-      return;
+
+      addNotice({
+        ...newNotice,
+        title: validatedData.title,
+        content: validatedData.content,
+        subject: validatedData.subject,
+        category: validatedData.category,
+        author: user?.name || 'Unknown',
+        department: user?.department || 'Administration'
+      });
+
+      toast({
+        title: "Success",
+        description: "Notice posted successfully!",
+      });
+
+      setNewNotice({
+        title: '',
+        content: '',
+        subject: '',
+        category: 'general',
+        pinned: false,
+        attachments: [],
+        classTargets: []
+      });
+      setIsCreateModalOpen(false);
+    } catch (error: any) {
+      if (error.errors) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0]?.message || "Invalid input",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to create notice",
+          variant: "destructive"
+        });
+      }
     }
-
-    addNotice({
-      ...newNotice,
-      author: user?.name || 'Unknown',
-      department: user?.department || 'Administration'
-    });
-
-    toast({
-      title: "Success",
-      description: "Notice posted successfully!",
-    });
-
-    setNewNotice({
-      title: '',
-      content: '',
-      subject: '',
-      category: 'general',
-      pinned: false,
-      attachments: [],
-      classTargets: []
-    });
-    setIsCreateModalOpen(false);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

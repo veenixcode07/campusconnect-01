@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Separator } from '@/components/ui/separator';
 import { MessageSquare, ThumbsUp, Search, Plus, User, CheckCircle, Send, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { querySchema, answerSchema } from '@/lib/validation';
 
 export const QueryForum: React.FC = () => {
   const { user } = useAuth();
@@ -33,32 +34,46 @@ export const QueryForum: React.FC = () => {
   );
 
   const handlePostQuestion = () => {
-    if (!questionTitle.trim() || !questionSubject.trim() || !questionContent.trim()) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive"
+    try {
+      // Validate input
+      const validatedData = querySchema.parse({
+        title: questionTitle,
+        subject: questionSubject,
+        content: questionContent
       });
-      return;
+
+      addQuery({
+        title: validatedData.title,
+        subject: validatedData.subject,
+        content: validatedData.content,
+        author: user?.name || 'Anonymous'
+      });
+
+      // Reset form
+      setQuestionTitle('');
+      setQuestionSubject('');
+      setQuestionContent('');
+      setIsDialogOpen(false);
+
+      toast({
+        title: "Success",
+        description: "Your question has been posted!"
+      });
+    } catch (error: any) {
+      if (error.errors) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0]?.message || "Invalid input",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to post question",
+          variant: "destructive"
+        });
+      }
     }
-
-    addQuery({
-      title: questionTitle.trim(),
-      subject: questionSubject.trim(),
-      content: questionContent.trim(),
-      author: user?.name || 'Anonymous'
-    });
-
-    // Reset form
-    setQuestionTitle('');
-    setQuestionSubject('');
-    setQuestionContent('');
-    setIsDialogOpen(false);
-
-    toast({
-      title: "Success",
-      description: "Your question has been posted!"
-    });
   };
 
   const handleCancelQuestion = () => {
@@ -75,19 +90,40 @@ export const QueryForum: React.FC = () => {
   };
 
   const handleAddAnswer = (queryId: string) => {
-    if (!newAnswer.trim() || !user) return;
+    if (!user) return;
 
-    addAnswer(queryId, {
-      content: newAnswer.trim(),
-      author: user.name,
-      authorRole: user.role
-    });
+    try {
+      // Validate input
+      const validatedData = answerSchema.parse({
+        content: newAnswer
+      });
 
-    setNewAnswer('');
-    toast({
-      title: "Success",
-      description: "Your answer has been posted!"
-    });
+      addAnswer(queryId, {
+        content: validatedData.content,
+        author: user.name,
+        authorRole: user.role
+      });
+
+      setNewAnswer('');
+      toast({
+        title: "Success",
+        description: "Your answer has been posted!"
+      });
+    } catch (error: any) {
+      if (error.errors) {
+        toast({
+          title: "Validation Error",
+          description: error.errors[0]?.message || "Invalid input",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to post answer",
+          variant: "destructive"
+        });
+      }
+    }
   };
 
   const handleAcceptAnswer = (queryId: string, answerId: string) => {

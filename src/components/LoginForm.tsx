@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { loginSchema, signUpSchema } from '@/lib/validation';
 
 export const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -24,9 +25,20 @@ export const LoginForm: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      // Validate input
+      const validatedData = loginSchema.parse({ email, password });
+      
+      await login(validatedData.email, validatedData.password);
       navigate('/dashboard', { replace: true });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.errors) {
+        // Zod validation error
+        toast({
+          title: "Validation Error",
+          description: error.errors[0]?.message || "Invalid input",
+          variant: "destructive"
+        });
+      }
       setEmail('');
       setPassword('');
     }
@@ -37,14 +49,17 @@ export const LoginForm: React.FC = () => {
     setSignUpLoading(true);
     
     try {
+      // Validate input
+      const validatedData = signUpSchema.parse({ email, password, name, sapid });
+
       const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
+        email: validatedData.email,
+        password: validatedData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
-            name,
-            sapid,
+            name: validatedData.name,
+            sapid: validatedData.sapid,
             role: 'student'
           }
         }
@@ -62,12 +77,21 @@ export const LoginForm: React.FC = () => {
       setPassword('');
       setName('');
       setSapid('');
-    } catch (error) {
-      toast({
-        title: "Sign up failed",
-        description: error instanceof Error ? error.message : "An error occurred",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      if (error.errors) {
+        // Zod validation error
+        toast({
+          title: "Validation Error",
+          description: error.errors[0]?.message || "Invalid input",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Sign up failed",
+          description: error instanceof Error ? error.message : "An error occurred",
+          variant: "destructive",
+        });
+      }
     } finally {
       setSignUpLoading(false);
     }
