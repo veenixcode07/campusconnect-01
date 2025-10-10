@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
 
 export interface Answer {
   id: string;
@@ -15,7 +14,6 @@ export interface Query {
   title: string;
   content: string;
   author: string;
-  authorClass: string;
   subject: string;
   replies: number;
   likes: number;
@@ -27,8 +25,7 @@ export interface Query {
 
 interface QueryContextType {
   queries: Query[];
-  filteredQueries: Query[];
-  addQuery: (query: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy' | 'authorClass'>) => void;
+  addQuery: (query: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy'>) => void;
   addAnswer: (queryId: string, answer: Omit<Answer, 'id' | 'timestamp'>) => void;
   likeQuery: (queryId: string, userId: string) => void;
   markAnswerAsAccepted: (queryId: string, answerId: string) => void;
@@ -45,87 +42,157 @@ export const useQuery = () => {
   return context;
 };
 
+const initialQueries: Query[] = [
+  {
+    id: '1',
+    title: "Advanced Database Query Optimization",
+    content: "I'm working on optimizing complex SQL queries for our database project. The queries involve multiple joins and subqueries, and they're running very slowly. Can anyone help with optimization techniques?",
+    author: "Alice Cooper",
+    subject: "Database Systems",
+    replies: 3,
+    likes: 18,
+    solved: true,
+    timestamp: "2024-01-20T09:30:00Z",
+    answers: [
+      {
+        id: '1',
+        content: "Start by analyzing your execution plan. Look for table scans and consider adding appropriate indexes. Also, try to rewrite subqueries as joins where possible for better performance.",
+        author: "Prof. Williams",
+        authorRole: 'faculty',
+        timestamp: "2024-01-20T10:15:00Z",
+        isAccepted: true
+      },
+      {
+        id: '2',
+        content: "I had a similar issue. Using EXPLAIN ANALYZE helped me identify bottlenecks. Also consider partitioning large tables if your dataset is huge.",
+        author: "Mark Thompson",
+        authorRole: 'student',
+        timestamp: "2024-01-20T11:00:00Z"
+      },
+      {
+        id: '3',
+        content: "Don't forget about query caching and consider using materialized views for frequently accessed complex queries.",
+        author: "Dr. Chen",
+        authorRole: 'faculty',
+        timestamp: "2024-01-20T14:30:00Z"
+      }
+    ],
+    likedBy: ['STU001', 'STU002', 'FAC001']
+  },
+  {
+    id: '2',
+    title: "Machine Learning Algorithm Selection",
+    content: "For my final project, I need to classify customer behavior data. I'm torn between using Random Forest, SVM, or Neural Networks. What factors should I consider when choosing?",
+    author: "David Kim",
+    subject: "Machine Learning",
+    replies: 2,
+    likes: 15,
+    solved: false,
+    timestamp: "2024-01-19T14:20:00Z",
+    answers: [
+      {
+        id: '4',
+        content: "Consider your dataset size, interpretability needs, and computational resources. Random Forest is great for tabular data and provides feature importance. Neural Networks need more data but can capture complex patterns.",
+        author: "Dr. Patel",
+        authorRole: 'faculty',
+        timestamp: "2024-01-19T15:45:00Z"
+      },
+      {
+        id: '5',
+        content: "I'd suggest starting with Random Forest for baseline performance, then try SVM if you need better results. Neural Networks should be your last resort unless you have a large dataset.",
+        author: "Lisa Zhang",
+        authorRole: 'student',
+        timestamp: "2024-01-19T16:30:00Z"
+      }
+    ],
+    likedBy: ['STU003', 'ADM001']
+  },
+  {
+    id: '3',
+    title: "Quantum Computing Study Group",
+    content: "Is anyone interested in forming a study group for Quantum Computing fundamentals? We could meet weekly to discuss concepts and solve problems together.",
+    author: "Sarah Johnson",
+    subject: "Quantum Computing",
+    replies: 4,
+    likes: 22,
+    solved: false,
+    timestamp: "2024-01-18T11:15:00Z",
+    answers: [
+      {
+        id: '6',
+        content: "Count me in! I'm struggling with quantum gates and circuits. Group study would be really helpful.",
+        author: "Tom Wilson",
+        authorRole: 'student',
+        timestamp: "2024-01-18T12:00:00Z"
+      },
+      {
+        id: '7',
+        content: "Great idea! I suggest we start with the basics of qubits and superposition before moving to more complex topics.",
+        author: "Emily Davis",
+        authorRole: 'student',
+        timestamp: "2024-01-18T13:30:00Z"
+      },
+      {
+        id: '8',
+        content: "I'm interested too! Maybe we can use IBM Qiskit for practical exercises.",
+        author: "Alex Rodriguez",
+        authorRole: 'student',
+        timestamp: "2024-01-18T14:15:00Z"
+      },
+      {
+        id: '9',
+        content: "Excellent initiative! I can provide guidance and additional resources. Consider meeting in the physics lab where we have quantum simulation software.",
+        author: "Prof. Anderson",
+        authorRole: 'faculty',
+        timestamp: "2024-01-18T16:00:00Z"
+      }
+    ],
+    likedBy: ['STU001', 'STU004', 'STU005', 'FAC002']
+  },
+  {
+    id: '4',
+    title: "Cybersecurity Career Advice",
+    content: "I'm a second-year CS student interested in cybersecurity. What skills should I focus on developing, and are there any internship opportunities you'd recommend?",
+    author: "Jessica Lee",
+    subject: "Career Guidance",
+    replies: 2,
+    likes: 28,
+    solved: true,
+    timestamp: "2024-01-17T10:00:00Z",
+    answers: [
+      {
+        id: '10',
+        content: "Focus on networking fundamentals, cryptography, and hands-on experience with security tools. Participate in CTF competitions and consider certifications like CompTIA Security+. I can share some internship opportunities.",
+        author: "Prof. Martinez",
+        authorRole: 'faculty',
+        timestamp: "2024-01-17T11:30:00Z",
+        isAccepted: true
+      },
+      {
+        id: '11',
+        content: "Also learn Python and bash scripting - they're essential for security automation. Check out HackTheBox and TryHackMe for practical experience.",
+        author: "Ryan Foster",
+        authorRole: 'student',
+        timestamp: "2024-01-17T15:20:00Z"
+      }
+    ],
+    likedBy: ['STU001', 'STU002', 'STU003', 'STU006', 'ADM001']
+  }
+];
+
 export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const [queries, setQueries] = useState<Query[]>(initialQueries);
 
-  // Initialize with mock data
-  const [queries, setQueries] = useState<Query[]>([
-    {
-      id: '1',
-      title: 'Help with Binary Tree Implementation',
-      content: 'I am having trouble implementing a binary tree in C++. Can someone help me with the insertion logic?',
-      author: 'John Student',
-      authorClass: 'A',
-      subject: 'Computer Science',
-      replies: 1,
-      likes: 3,
-      solved: false,
-      timestamp: '2024-08-20T10:00:00Z',
-      likedBy: ['FAC001', 'ADM001', 'STU002'],
-      answers: [
-        {
-          id: 'a1',
-          content: 'For binary tree insertion, you need to compare the new value with the current node. If it\'s smaller, go to the left child; if larger, go to the right child. Repeat until you find an empty spot.',
-          author: 'Dr. Sarah Faculty',
-          authorRole: 'faculty',
-          timestamp: '2024-08-20T11:00:00Z',
-          isAccepted: false
-        }
-      ]
-    },
-    {
-      id: '2',
-      title: 'SQL Join Queries Confusion',
-      content: 'Can someone explain the difference between INNER JOIN and LEFT JOIN with examples?',
-      author: 'Emma Wilson',
-      authorClass: 'B',
-      subject: 'Computer Science',
-      replies: 1,
-      likes: 5,
-      solved: true,
-      timestamp: '2024-08-19T15:30:00Z',
-      likedBy: ['FAC001', 'STU003', 'STU004', 'ADM002', 'STU005'],
-      answers: [
-        {
-          id: 'a2',
-          content: 'INNER JOIN returns only rows that have matching values in both tables, while LEFT JOIN returns all rows from the left table and matching rows from the right table. If no match is found, NULL values are returned for the right table columns.',
-          author: 'Dr. Sarah Faculty',
-          authorRole: 'faculty',
-          timestamp: '2024-08-19T16:00:00Z',
-          isAccepted: true
-        }
-      ]
-    }
-  ]);
-
-  // Filter queries based on user's class
-  const filteredQueries = queries.filter(query => {
-    if (!user) return [];
-    
-    // Faculty can see all queries
-    if (user.role === 'faculty') {
-      return true;
-    }
-    
-    // Students and admins can only see queries from their own class
-    if (user.role === 'student' || user.role === 'admin') {
-      return query.authorClass === user.section;
-    }
-    
-    return false;
-  });
-
-  const addQuery = (newQuery: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy' | 'authorClass'>) => {
+  const addQuery = (newQuery: Omit<Query, 'id' | 'replies' | 'likes' | 'solved' | 'timestamp' | 'answers' | 'likedBy'>) => {
     const query: Query = {
       ...newQuery,
-      id: Math.random().toString(36).substr(2, 9),
+      id: Date.now().toString(),
       replies: 0,
       likes: 0,
       solved: false,
       timestamp: new Date().toISOString(),
       answers: [],
-      likedBy: [],
-      authorClass: user?.section || 'A' // Default to A if no section
+      likedBy: []
     };
     setQueries(prev => [query, ...prev]);
   };
@@ -133,9 +200,8 @@ export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const addAnswer = (queryId: string, newAnswer: Omit<Answer, 'id' | 'timestamp'>) => {
     const answer: Answer = {
       ...newAnswer,
-      id: Math.random().toString(36).substr(2, 9),
-      timestamp: new Date().toISOString(),
-      isAccepted: false
+      id: Date.now().toString(),
+      timestamp: new Date().toISOString()
     };
 
     setQueries(prev => prev.map(query => {
@@ -154,15 +220,12 @@ export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setQueries(prev => prev.map(query => {
       if (query.id === queryId) {
         const hasLiked = query.likedBy.includes(userId);
-        const newLikedBy = hasLiked 
-          ? query.likedBy.filter(id => id !== userId)
-          : [...query.likedBy, userId];
-        const newLikes = hasLiked ? query.likes - 1 : query.likes + 1;
-
         return {
           ...query,
-          likes: newLikes,
-          likedBy: newLikedBy
+          likes: hasLiked ? query.likes - 1 : query.likes + 1,
+          likedBy: hasLiked 
+            ? query.likedBy.filter(id => id !== userId)
+            : [...query.likedBy, userId]
         };
       }
       return query;
@@ -193,7 +256,6 @@ export const QueryProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   return (
     <QueryContext.Provider value={{
       queries,
-      filteredQueries,
       addQuery,
       addAnswer,
       likeQuery,

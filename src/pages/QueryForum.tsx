@@ -10,11 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Separator } from '@/components/ui/separator';
 import { MessageSquare, ThumbsUp, Search, Plus, User, CheckCircle, Send, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { querySchema, answerSchema } from '@/lib/validation';
 
 export const QueryForum: React.FC = () => {
   const { user } = useAuth();
-  const { filteredQueries, addQuery, addAnswer, likeQuery, markAnswerAsAccepted, deleteQuery } = useQuery();
+  const { queries, addQuery, addAnswer, likeQuery, markAnswerAsAccepted, deleteQuery } = useQuery();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
@@ -26,54 +25,39 @@ export const QueryForum: React.FC = () => {
   const [questionSubject, setQuestionSubject] = useState('');
   const [questionContent, setQuestionContent] = useState('');
 
-  // Filter queries based on search (using already class-filtered queries)
-  const searchFilteredQueries = filteredQueries.filter(query =>
+  const filteredQueries = queries.filter(query =>
     query.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     query.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
     query.subject.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handlePostQuestion = () => {
-    try {
-      // Validate input
-      const validatedData = querySchema.parse({
-        title: questionTitle,
-        subject: questionSubject,
-        content: questionContent
-      });
-
-      addQuery({
-        title: validatedData.title,
-        subject: validatedData.subject,
-        content: validatedData.content,
-        author: user?.name || 'Anonymous'
-      });
-
-      // Reset form
-      setQuestionTitle('');
-      setQuestionSubject('');
-      setQuestionContent('');
-      setIsDialogOpen(false);
-
+    if (!questionTitle.trim() || !questionSubject.trim() || !questionContent.trim()) {
       toast({
-        title: "Success",
-        description: "Your question has been posted!"
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive"
       });
-    } catch (error: any) {
-      if (error.errors) {
-        toast({
-          title: "Validation Error",
-          description: error.errors[0]?.message || "Invalid input",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to post question",
-          variant: "destructive"
-        });
-      }
+      return;
     }
+
+    addQuery({
+      title: questionTitle.trim(),
+      subject: questionSubject.trim(),
+      content: questionContent.trim(),
+      author: user?.name || 'Anonymous'
+    });
+
+    // Reset form
+    setQuestionTitle('');
+    setQuestionSubject('');
+    setQuestionContent('');
+    setIsDialogOpen(false);
+
+    toast({
+      title: "Success",
+      description: "Your question has been posted!"
+    });
   };
 
   const handleCancelQuestion = () => {
@@ -90,40 +74,19 @@ export const QueryForum: React.FC = () => {
   };
 
   const handleAddAnswer = (queryId: string) => {
-    if (!user) return;
+    if (!newAnswer.trim() || !user) return;
 
-    try {
-      // Validate input
-      const validatedData = answerSchema.parse({
-        content: newAnswer
-      });
+    addAnswer(queryId, {
+      content: newAnswer.trim(),
+      author: user.name,
+      authorRole: user.role
+    });
 
-      addAnswer(queryId, {
-        content: validatedData.content,
-        author: user.name,
-        authorRole: user.role
-      });
-
-      setNewAnswer('');
-      toast({
-        title: "Success",
-        description: "Your answer has been posted!"
-      });
-    } catch (error: any) {
-      if (error.errors) {
-        toast({
-          title: "Validation Error",
-          description: error.errors[0]?.message || "Invalid input",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to post answer",
-          variant: "destructive"
-        });
-      }
-    }
+    setNewAnswer('');
+    toast({
+      title: "Success",
+      description: "Your answer has been posted!"
+    });
   };
 
   const handleAcceptAnswer = (queryId: string, answerId: string) => {
@@ -142,7 +105,7 @@ export const QueryForum: React.FC = () => {
     });
   };
 
-  const selectedQueryData = selectedQuery ? searchFilteredQueries.find(q => q.id === selectedQuery) : null;
+  const selectedQueryData = selectedQuery ? queries.find(q => q.id === selectedQuery) : null;
 
   return (
     <div className="space-y-6">
@@ -198,14 +161,7 @@ export const QueryForum: React.FC = () => {
       </div>
 
       <div className="grid gap-4">
-        {searchFilteredQueries.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-8">
-              <p className="text-muted-foreground">No questions found for your class.</p>
-            </CardContent>
-          </Card>
-        ) : (
-          searchFilteredQueries.map((query) => (
+        {filteredQueries.map((query) => (
           <Card key={query.id} className="hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -364,8 +320,7 @@ export const QueryForum: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          ))
-        )}
+        ))}
       </div>
     </div>
   );

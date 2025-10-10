@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
 import { 
   BookOpen, 
   Search, 
@@ -26,41 +23,16 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams } from 'react-router-dom';
 
 export const Resources: React.FC = () => {
   const { user } = useAuth();
-  const { getFilteredResources, deleteResource } = useApp();
+  const { resources, toggleResourceFavorite, deleteResource } = useApp();
   const { toast } = useToast();
-  const [searchParams, setSearchParams] = useSearchParams();
-  
-  // Get filtered resources based on user's role and class
-  const resources = getFilteredResources();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedFavorite, setSelectedFavorite] = useState<string>('all');
   const [showFavorites, setShowFavorites] = useState(false);
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [newResource, setNewResource] = useState({
-    title: '',
-    description: '',
-    subject: '',
-    type: 'pdf' as 'pdf' | 'ppt' | 'doc' | 'video' | 'image' | 'other',
-    tags: [] as string[],
-    classTargets: [] as string[]
-  });
-
-  // Check URL params to auto-open upload dialog
-  useEffect(() => {
-    if (searchParams.get('action') === 'upload') {
-      setIsUploadDialogOpen(true);
-      // Remove the search param after opening
-      searchParams.delete('action');
-      setSearchParams(searchParams);
-    }
-  }, [searchParams, setSearchParams]);
-  const [tagInput, setTagInput] = useState('');
 
   const getFileIcon = (type: string) => {
     switch (type) {
@@ -85,10 +57,10 @@ export const Resources: React.FC = () => {
   };
 
   const handleToggleFavorite = (resourceId: string) => {
+    toggleResourceFavorite(resourceId);
     toast({
-      title: "Info",
-      description: "Favorites feature coming soon!",
-      duration: 3000,
+      title: "Success",
+      description: "Resource favorite status updated!",
     });
   };
 
@@ -97,28 +69,6 @@ export const Resources: React.FC = () => {
     toast({
       title: "Success",
       description: "Resource deleted successfully!",
-      duration: 3000,
-    });
-  };
-
-  const handleDownload = (resource: any) => {
-    // Create a downloadable file URL (for demo purposes)
-    const fileName = `${resource.title.replace(/\s+/g, '_')}.${resource.type}`;
-    const fileContent = `This is a sample ${resource.type.toUpperCase()} file for ${resource.title}.\n\nDescription: ${resource.description}\n\nSubject: ${resource.subject}\nUploaded by: ${resource.uploadedBy}\nUpload Date: ${resource.uploadDate}`;
-    const blob = new Blob([fileContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Download Started",
-      description: `Downloading ${resource.title}`,
-      duration: 3000,
     });
   };
 
@@ -133,83 +83,10 @@ export const Resources: React.FC = () => {
                          resource.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesSubject = selectedSubject === 'all' || resource.subject === selectedSubject;
     const matchesType = selectedType === 'all' || resource.type === selectedType;
-    const matchesFavorites = !showFavorites;
+    const matchesFavorites = !showFavorites || resource.favorited;
     
     return matchesSearch && matchesSubject && matchesType && matchesFavorites;
   });
-
-  const handleCreateResource = () => {
-    if (!newResource.title.trim() || !newResource.description.trim() || !newResource.subject.trim()) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // In a real app, this would upload the file and get back file info
-    const mockResource = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: newResource.title,
-      description: newResource.description,
-      type: newResource.type,
-      subject: newResource.subject,
-      uploadedBy: user?.name || 'Unknown',
-      uploadDate: new Date().toISOString().split('T')[0],
-      size: '1.2 MB', // Mock size
-      downloads: 0,
-      likes: 0,
-      tags: newResource.tags,
-      favorited: false,
-      classTargets: newResource.classTargets
-    };
-
-    // Here you would typically add to context, but for now just show success
-    toast({
-      title: "Success",
-      description: "Resource uploaded successfully!",
-      duration: 3000,
-    });
-
-    // Reset form
-    setNewResource({
-      title: '',
-      description: '',
-      subject: '',
-      type: 'pdf',
-      tags: [],
-      classTargets: []
-    });
-    setTagInput('');
-    setIsUploadDialogOpen(false);
-  };
-
-  const handleAddTag = () => {
-    if (tagInput.trim() && !newResource.tags.includes(tagInput.trim())) {
-      setNewResource(prev => ({
-        ...prev,
-        tags: [...prev.tags, tagInput.trim()]
-      }));
-      setTagInput('');
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setNewResource(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
-  };
-
-  const handleClassToggle = (className: string) => {
-    setNewResource(prev => ({
-      ...prev,
-      classTargets: prev.classTargets.includes(className)
-        ? prev.classTargets.filter(c => c !== className)
-        : [...prev.classTargets, className]
-    }));
-  };
 
   const canUpload = user?.role === 'admin' || user?.role === 'faculty';
 
@@ -222,143 +99,17 @@ export const Resources: React.FC = () => {
           <p className="text-muted-foreground">Access study materials, notes, and educational content</p>
         </div>
         {canUpload && (
-          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <PlusCircle className="w-4 h-4" />
-                Upload Resource
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Upload New Resource</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Resource Title</Label>
-                  <Input
-                    id="title"
-                    placeholder="Enter resource title"
-                    value={newResource.title}
-                    onChange={(e) => setNewResource({...newResource, title: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Enter resource description"
-                    rows={3}
-                    value={newResource.description}
-                    onChange={(e) => setNewResource({...newResource, description: e.target.value})}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="subject">Subject</Label>
-                    <Input
-                      id="subject"
-                      placeholder="Enter subject"
-                      value={newResource.subject}
-                      onChange={(e) => setNewResource({...newResource, subject: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="type">File Type</Label>
-                    <Select value={newResource.type} onValueChange={(value: any) => setNewResource({...newResource, type: value})}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pdf">PDF</SelectItem>
-                        <SelectItem value="ppt">PowerPoint</SelectItem>
-                        <SelectItem value="doc">Document</SelectItem>
-                        <SelectItem value="video">Video</SelectItem>
-                        <SelectItem value="image">Image</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="classTargets">Target Classes (Leave empty for all classes)</Label>
-                  <div className="flex gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="cs-a-resource" 
-                        checked={newResource.classTargets.includes('Computer Science-2024-A')}
-                        onCheckedChange={() => handleClassToggle('Computer Science-2024-A')}
-                      />
-                      <Label htmlFor="cs-a-resource">Class A</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="cs-b-resource" 
-                        checked={newResource.classTargets.includes('Computer Science-2024-B')}
-                        onCheckedChange={() => handleClassToggle('Computer Science-2024-B')}
-                      />
-                      <Label htmlFor="cs-b-resource">Class B</Label>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Select specific classes or leave empty to make available to all students
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tags">Tags</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="tags"
-                      placeholder="Add a tag"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                    />
-                    <Button type="button" variant="outline" onClick={handleAddTag}>
-                      Add
-                    </Button>
-                  </div>
-                  {newResource.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {newResource.tags.map((tag, index) => (
-                        <Badge 
-                          key={index} 
-                          variant="outline" 
-                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                          onClick={() => handleRemoveTag(tag)}
-                        >
-                          #{tag} ×
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="file-upload">Upload File</Label>
-                  <Input
-                    id="file-upload"
-                    type="file"
-                    accept=".pdf,.ppt,.pptx,.doc,.docx,.mp4,.avi,.jpg,.jpeg,.png,.gif"
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreateResource}>
-                    Upload Resource
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button className="flex items-center gap-2">
+            <PlusCircle className="w-4 h-4" />
+            Upload Resource
+          </Button>
         )}
       </div>
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-3 md:p-4">
-          <div className="flex flex-col gap-3 md:flex-row md:gap-4">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -410,7 +161,7 @@ export const Resources: React.FC = () => {
       </Card>
 
       {/* Resources Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredResources.length === 0 ? (
           <Card className="col-span-full">
             <CardContent className="py-12 text-center">
@@ -471,7 +222,7 @@ export const Resources: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    {new Date(resource.createdAt).toLocaleDateString()}
+                    {new Date(resource.uploadDate).toLocaleDateString()}
                   </div>
                 </div>
 
@@ -491,11 +242,7 @@ export const Resources: React.FC = () => {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-2">
-                  <Button 
-                    className="flex-1" 
-                    size="sm"
-                    onClick={() => handleDownload(resource)}
-                  >
+                  <Button className="flex-1" size="sm">
                     <Download className="w-4 h-4 mr-2" />
                     Download
                   </Button>
@@ -549,47 +296,19 @@ export const Resources: React.FC = () => {
                               <div className="text-sm text-muted-foreground">Likes</div>
                             </div>
                             <div>
-                              <div className="text-2xl font-bold text-primary">{new Date(resource.createdAt).toLocaleDateString()}</div>
+                              <div className="text-2xl font-bold text-primary">{new Date(resource.uploadDate).toLocaleDateString()}</div>
                               <div className="text-sm text-muted-foreground">Upload Date</div>
                             </div>
                           </div>
                         </div>
 
                         <div className="bg-muted p-4 rounded-lg">
-                          {resource.type === 'pdf' && (
-                            <div className="space-y-2">
-                              <div className="h-40 bg-white border rounded flex items-center justify-center">
-                                <FileText className="w-12 h-12 text-red-500" />
-                              </div>
-                              <Button 
-                                className="w-full" 
-                                onClick={() => handleDownload(resource)}
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                Download PDF
-                              </Button>
-                            </div>
-                          )}
-                          {resource.type === 'video' && (
-                            <div className="space-y-2">
-                              <div className="h-40 bg-black rounded flex items-center justify-center">
-                                <Video className="w-12 h-12 text-white" />
-                              </div>
-                              <p className="text-sm text-center text-muted-foreground">
-                                Video content preview
-                              </p>
-                            </div>
-                          )}
-                          {resource.type === 'image' && (
-                            <div className="h-40 bg-gray-100 rounded flex items-center justify-center">
-                              <Image className="w-12 h-12 text-gray-400" />
-                            </div>
-                          )}
-                          {!['pdf', 'video', 'image'].includes(resource.type) && (
-                            <div className="h-40 bg-gray-100 rounded flex items-center justify-center">
-                              <File className="w-12 h-12 text-gray-400" />
-                            </div>
-                          )}
+                          <p className="text-sm text-muted-foreground text-center">
+                            {resource.type === 'video' ? 'Video preview would appear here' :
+                             resource.type === 'pdf' ? 'PDF preview would appear here' :
+                             resource.type === 'image' ? 'Image preview would appear here' :
+                             'File preview would appear here'}
+                          </p>
                         </div>
                       </div>
                     </DialogContent>
@@ -599,7 +318,7 @@ export const Resources: React.FC = () => {
                     size="sm"
                     onClick={() => handleToggleFavorite(resource.id)}
                   >
-                    <Heart className="w-4 h-4" />
+                    <Heart className={`w-4 h-4 ${resource.favorited ? 'fill-red-500 text-red-500' : ''}`} />
                   </Button>
                 </div>
               </CardContent>

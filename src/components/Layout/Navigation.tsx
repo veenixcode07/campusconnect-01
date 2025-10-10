@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
@@ -15,7 +15,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/auth';
-import { LogoutConfirmModal } from '@/components/LogoutConfirmModal';
 
 interface NavigationItem {
   name: string;
@@ -42,7 +41,6 @@ interface NavigationProps {
 export const Navigation: React.FC<NavigationProps> = ({ isDesktop = false, onItemClick }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   if (!user) return null;
 
@@ -51,13 +49,8 @@ export const Navigation: React.FC<NavigationProps> = ({ isDesktop = false, onIte
   );
 
   const handleLogout = () => {
-    setShowLogoutModal(true);
-  };
-
-  const confirmLogout = () => {
     logout();
     onItemClick?.();
-    setShowLogoutModal(false);
   };
 
   return (
@@ -79,7 +72,7 @@ export const Navigation: React.FC<NavigationProps> = ({ isDesktop = false, onIte
             )}
           >
             <Icon className="w-4 h-4" />
-            <span className={isDesktop ? "" : "sr-only md:not-sr-only"}>{item.name}</span>
+            {isDesktop && <span>{item.name}</span>}
           </Link>
         );
       })}
@@ -93,14 +86,8 @@ export const Navigation: React.FC<NavigationProps> = ({ isDesktop = false, onIte
         )}
       >
         <LogOut className="w-4 h-4" />
-        <span className={isDesktop ? "" : "sr-only md:not-sr-only"}>Logout</span>
+        {isDesktop && <span>Logout</span>}
       </Button>
-      
-      <LogoutConfirmModal
-        isOpen={showLogoutModal}
-        onClose={() => setShowLogoutModal(false)}
-        onConfirm={confirmLogout}
-      />
     </nav>
   );
 };

@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { QueryProvider } from "@/contexts/QueryContext";
 import { AppProvider } from "@/contexts/AppContext";
@@ -21,20 +21,15 @@ const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
   const { user } = useAuth();
-  const location = useLocation();
   
   if (!user) {
     return <LoginForm />;
-  }
-
-  // Always redirect to dashboard after login
-  if (location.pathname === '/' || location.pathname === '/login' || location.pathname === '') {
-    return <Navigate to="/dashboard" replace />;
   }
   
   return (
     <AppLayout>
       <Routes>
+        <Route path="/" element={<Dashboard />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/notices" element={<Notices />} />
         <Route path="/resources" element={<Resources />} />

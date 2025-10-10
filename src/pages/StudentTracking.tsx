@@ -9,11 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Search, User, TrendingUp, TrendingDown, AlertTriangle, FileText } from 'lucide-react';
 import { StudentProfileModal } from '@/components/StudentProfileModal';
-import { ContactStudentModal } from '@/components/ContactStudentModal';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { studentNoteSchema } from '@/lib/validation';
 
 export const StudentTracking: React.FC = () => {
   const { addStudentNote, getStudentNotes } = useApp();
@@ -24,9 +22,7 @@ export const StudentTracking: React.FC = () => {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isAddNotesModalOpen, setIsAddNotesModalOpen] = useState(false);
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [studentForNotes, setStudentForNotes] = useState<any>(null);
-  const [studentForContact, setStudentForContact] = useState<any>(null);
   const [noteContent, setNoteContent] = useState('');
 
   const students = [
@@ -108,44 +104,30 @@ export const StudentTracking: React.FC = () => {
     setIsAddNotesModalOpen(true);
   };
 
-  const handleContactStudent = (student: any) => {
-    setStudentForContact(student);
-    setIsContactModalOpen(true);
-  };
-
   const handleSaveNote = () => {
-    try {
-      // Validate input
-      const validatedData = studentNoteSchema.parse({
-        note: noteContent
-      });
-
-      addStudentNote(studentForNotes.id.toString(), validatedData.note);
-
+    if (!noteContent.trim()) {
       toast({
-        title: "Success",
-        description: "Note added successfully!",
-        duration: 3000,
+        title: "Error",
+        description: "Please enter a note before saving.",
+        variant: "destructive"
       });
-
-      setNoteContent('');
-      setIsAddNotesModalOpen(false);
-      setStudentForNotes(null);
-    } catch (error: any) {
-      if (error.errors) {
-        toast({
-          title: "Validation Error",
-          description: error.errors[0]?.message || "Invalid input",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to save note",
-          variant: "destructive"
-        });
-      }
+      return;
     }
+
+    addStudentNote({
+      studentId: studentForNotes.id.toString(),
+      note: noteContent,
+      author: user?.name || 'Unknown Faculty'
+    });
+
+    toast({
+      title: "Success",
+      description: "Note added successfully!",
+    });
+
+    setNoteContent('');
+    setIsAddNotesModalOpen(false);
+    setStudentForNotes(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -176,6 +158,7 @@ export const StudentTracking: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Student Tracking</h1>
+        <Button>Export Report</Button>
       </div>
 
       <div className="flex items-center gap-4">
@@ -246,13 +229,7 @@ export const StudentTracking: React.FC = () => {
                 >
                   View Profile
                 </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleContactStudent(student)}
-                >
-                  Contact Student
-                </Button>
+                <Button variant="outline" size="sm">Contact Student</Button>
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -275,18 +252,6 @@ export const StudentTracking: React.FC = () => {
           onClose={() => {
             setIsProfileModalOpen(false);
             setSelectedStudent(null);
-          }}
-        />
-      )}
-
-      {/* Contact Student Modal */}
-      {studentForContact && (
-        <ContactStudentModal
-          student={studentForContact}
-          isOpen={isContactModalOpen}
-          onClose={() => {
-            setIsContactModalOpen(false);
-            setStudentForContact(null);
           }}
         />
       )}
@@ -327,7 +292,7 @@ export const StudentTracking: React.FC = () => {
                     getStudentNotes(studentForNotes.id.toString(), user?.name).map((note) => (
                       <div key={note.id} className="p-2 bg-muted rounded-md">
                         <div className="text-sm text-muted-foreground mb-1">
-                          {note.author} - {new Date(note.createdAt).toLocaleString()}
+                          {note.author} - {new Date(note.timestamp).toLocaleString()}
                         </div>
                         <div className="text-sm">{note.note}</div>
                       </div>

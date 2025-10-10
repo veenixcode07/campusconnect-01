@@ -138,6 +138,15 @@ export const Attendance: React.FC = () => {
           <p className="text-muted-foreground">Monitor your class attendance across all subjects</p>
         </div>
         <div className="flex gap-2">
+          <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="current">Current Semester</SelectItem>
+              <SelectItem value="previous">Previous Semester</SelectItem>
+            </SelectContent>
+          </Select>
           <Button 
             onClick={handleRefresh}
             disabled={isRefreshing}

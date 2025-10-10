@@ -6,86 +6,53 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { loginSchema } from '@/lib/validation';
 
 export const LoginForm: React.FC = () => {
   const [sapid, setSapid] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
-  const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Validate input
-      const validatedData = loginSchema.parse({ sapid, password });
-      const sapidNorm = validatedData.sapid.trim().toUpperCase();
-      
-      // Get email by SAP ID
-      const { data: email, error: lookupError } = await supabase
-        .rpc('get_email_by_sapid', { input_sapid: sapidNorm });
-      
-      if (lookupError || !email) {
-        throw new Error('Invalid SAP ID or password');
-      }
-      
-      await login(email, validatedData.password);
-      navigate('/dashboard', { replace: true });
-    } catch (error: any) {
-      if (error.errors) {
-        // Zod validation error
-        toast({
-          title: "Validation Error",
-          description: error.errors[0]?.message || "Invalid input",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Login Failed",
-          description: error.message || "Invalid SAP ID or password",
-          variant: "destructive"
-        });
-      }
+      await login(sapid, password);
+    } catch (error) {
+      // Clear fields on error
       setSapid('');
       setPassword('');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="bg-primary/10 p-4 rounded-full">
-              <GraduationCap className="w-10 h-10 text-primary" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="bg-primary/10 p-3 rounded-full">
+              <GraduationCap className="w-8 h-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold">Campus Connect</CardTitle>
-          <CardDescription className="text-base">
-            Sign in with your SAP ID to access your portal
+          <CardTitle className="text-2xl font-bold">Campus Connect</CardTitle>
+          <CardDescription>
+            Sign in to access your college portal
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-6">
-          <form onSubmit={handleLogin} className="space-y-6">
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="sapid" className="text-sm font-medium">SAP ID</Label>
+              <Label htmlFor="sapid">SAPID</Label>
               <Input
                 id="sapid"
                 type="text"
-                placeholder="Enter your SAP ID"
+                placeholder="Enter your SAPID"
                 value={sapid}
                 onChange={(e) => setSapid(e.target.value)}
                 required
                 disabled={loading}
-                className="h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -94,7 +61,6 @@ export const LoginForm: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="h-11"
               />
             </div>
             
@@ -104,10 +70,10 @@ export const LoginForm: React.FC = () => {
               </Alert>
             )}
 
-            <Button type="submit" className="w-full h-11 text-base" disabled={loading}>
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Signing in...
                 </>
               ) : (
@@ -115,6 +81,15 @@ export const LoginForm: React.FC = () => {
               )}
             </Button>
           </form>
+
+          <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm">
+            <p className="font-medium mb-2">Demo Accounts:</p>
+            <div className="space-y-1 text-xs">
+              <p><strong>Student:</strong> STU001 / password123</p>
+              <p><strong>Admin:</strong> ADM001 / admin123</p>
+              <p><strong>Faculty:</strong> FAC001 / faculty123</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

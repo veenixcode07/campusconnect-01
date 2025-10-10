@@ -1,147 +1,120 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User as SupabaseUser, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { User, AuthState } from '../types/auth';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { User, AuthState, UserRole } from '@/types/auth';
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  session: Session | null;
+  login: (sapid: string, password: string) => Promise<void>;
+  logout: () => void;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Mock users for demo - in real app this would come from Supabase
+const mockUsers: Record<string, { password: string; user: User }> = {
+  'STU001': {
+    password: 'password123',
+    user: {
+      id: '1',
+      email: 'student@college.edu',
+      name: 'John Doe',
+      role: 'student',
+      department: 'Computer Science',
+      year: '3rd Year',
+      createdAt: new Date().toISOString(),
+    }
+  },
+  'ADM001': {
+    password: 'admin123',
+    user: {
+      id: '2',
+      email: 'admin@college.edu',
+      name: 'Jane Smith',
+      role: 'admin',
+      department: 'Computer Science',
+      year: '4th Year',
+      createdAt: new Date().toISOString(),
+    }
+  },
+  'FAC001': {
+    password: 'faculty123',
+    user: {
+      id: '3',
+      email: 'faculty@college.edu',
+      name: 'Dr. Robert Johnson',
+      role: 'faculty',
+      department: 'Computer Science',
+      createdAt: new Date().toISOString(),
+    }
+  }
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    loading: true,
+    error: null,
+  });
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        
-        if (session?.user) {
-          // Fetch user profile data
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
-        } else {
-          setUser(null);
-        }
-        
-        setLoading(false);
+    // Check for existing session
+    const savedUser = localStorage.getItem('campus_connect_user');
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser);
+        setAuthState({ user, loading: false, error: null });
+      } catch (error) {
+        localStorage.removeItem('campus_connect_user');
+        setAuthState({ user: null, loading: false, error: null });
       }
-    );
-
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    } else {
+      setAuthState({ user: null, loading: false, error: null });
+    }
   }, []);
 
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Fetch user role from user_roles table
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
-
-      if (roleError) throw roleError;
-
-      const userData: User = {
-        id: userId,
-        sapid: profile.sapid || '',
-        name: profile.name || '',
-        role: roleData.role,
-        department: profile.department,
-        year: profile.year,
-        section: profile.section,
-        rollNumber: profile.sapid,
-        createdAt: profile.created_at
-      };
-
-      setUser(userData);
-    } catch (err) {
-      console.error('Error fetching user profile:', err);
-      setError('Failed to load user profile');
-    }
-  };
-
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    setError(null);
+  const login = async (sapid: string, password: string): Promise<void> => {
+    setAuthState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (signInError) throw signInError;
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (data.user) {
-        await fetchUserProfile(data.user.id);
+      const userRecord = mockUsers[sapid];
+      if (!userRecord || userRecord.password !== password) {
+        throw new Error('Invalid SAPID or password');
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred during login';
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
+
+      const user = userRecord.user;
+      localStorage.setItem('campus_connect_user', JSON.stringify(user));
+      setAuthState({ user, loading: false, error: null });
+    } catch (error) {
+      setAuthState({
+        user: null,
+        loading: false,
+        error: error instanceof Error ? error.message : 'Login failed'
+      });
+      throw error;
     }
   };
 
-  const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      setUser(null);
-      setSession(null);
-    } catch (err) {
-      console.error('Error logging out:', err);
-      throw err;
-    }
+  const logout = () => {
+    localStorage.removeItem('campus_connect_user');
+    setAuthState({ user: null, loading: false, error: null });
   };
 
-  return (
-    <AuthContext.Provider value={{
-      user,
-      session,
-      loading,
-      error,
-      login,
-      logout
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const value: AuthContextType = {
+    ...authState,
+    login,
+    logout,
+    isAuthenticated: !!authState.user,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Bell, 
@@ -23,17 +22,11 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams } from 'react-router-dom';
-import { noticeSchema } from '@/lib/validation';
 
 export const Notices: React.FC = () => {
   const { user } = useAuth();
-  const { getFilteredNotices, addNotice, pinNotice, unpinNotice } = useApp();
+  const { notices, addNotice, pinNotice, unpinNotice } = useApp();
   const { toast } = useToast();
-  const [searchParams, setSearchParams] = useSearchParams();
-  
-  // Get filtered notices based on user's role and class
-  const notices = getFilteredNotices();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
@@ -48,70 +41,39 @@ export const Notices: React.FC = () => {
     subject: '',
     category: 'general' as 'general' | 'exam' | 'urgent',
     pinned: false,
-    attachments: [] as string[],
-    classTargets: [] as string[]
+    attachments: [] as string[]
   });
 
-  // Check URL params to auto-open create dialog
-  useEffect(() => {
-    if (searchParams.get('action') === 'create') {
-      setIsCreateModalOpen(true);
-      // Remove the search param after opening
-      searchParams.delete('action');
-      setSearchParams(searchParams);
-    }
-  }, [searchParams, setSearchParams]);
-
   const handleCreateNotice = () => {
-    try {
-      // Validate input
-      const validatedData = noticeSchema.parse({
-        title: newNotice.title,
-        content: newNotice.content,
-        subject: newNotice.subject,
-        category: newNotice.category
-      });
-
-      addNotice({
-        ...newNotice,
-        title: validatedData.title,
-        content: validatedData.content,
-        subject: validatedData.subject,
-        category: validatedData.category,
-        author: user?.name || 'Unknown',
-        department: user?.department || 'Administration'
-      });
-
+    if (!newNotice.title.trim() || !newNotice.content.trim()) {
       toast({
-        title: "Success",
-        description: "Notice posted successfully!",
+        title: "Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
       });
-
-      setNewNotice({
-        title: '',
-        content: '',
-        subject: '',
-        category: 'general',
-        pinned: false,
-        attachments: [],
-        classTargets: []
-      });
-      setIsCreateModalOpen(false);
-    } catch (error: any) {
-      if (error.errors) {
-        toast({
-          title: "Validation Error",
-          description: error.errors[0]?.message || "Invalid input",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to create notice",
-          variant: "destructive"
-        });
-      }
+      return;
     }
+
+    addNotice({
+      ...newNotice,
+      author: user?.name || 'Unknown',
+      department: user?.department || 'Administration'
+    });
+
+    toast({
+      title: "Success",
+      description: "Notice posted successfully!",
+    });
+
+    setNewNotice({
+      title: '',
+      content: '',
+      subject: '',
+      category: 'general',
+      pinned: false,
+      attachments: []
+    });
+    setIsCreateModalOpen(false);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,15 +82,6 @@ export const Notices: React.FC = () => {
     setNewNotice(prev => ({
       ...prev,
       attachments: [...prev.attachments, ...fileNames]
-    }));
-  };
-
-  const handleClassToggle = (className: string) => {
-    setNewNotice(prev => ({
-      ...prev,
-      classTargets: prev.classTargets.includes(className)
-        ? prev.classTargets.filter(c => c !== className)
-        : [...prev.classTargets, className]
     }));
   };
 
@@ -151,7 +104,7 @@ export const Notices: React.FC = () => {
       const hours = parseInt(pinDuration);
       const pinUntil = new Date(Date.now() + hours * 60 * 60 * 1000);
       
-      pinNotice(selectedNoticeForPin.id, pinUntil.toISOString());
+      pinNotice(selectedNoticeForPin.id, pinUntil);
       
       toast({
         title: "Success",
@@ -203,7 +156,7 @@ export const Notices: React.FC = () => {
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
     // Then by date (newest first)
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
   const canPost = user?.role === 'admin' || user?.role === 'faculty';
@@ -271,30 +224,6 @@ export const Notices: React.FC = () => {
                       onChange={(e) => setNewNotice({...newNotice, subject: e.target.value})}
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="classTargets">Target Classes (Leave empty for all classes)</Label>
-                  <div className="flex gap-4">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="cs-a" 
-                        checked={newNotice.classTargets.includes('Computer Science-2024-A')}
-                        onCheckedChange={() => handleClassToggle('Computer Science-2024-A')}
-                      />
-                      <Label htmlFor="cs-a">Class A</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="cs-b" 
-                        checked={newNotice.classTargets.includes('Computer Science-2024-B')}
-                        onCheckedChange={() => handleClassToggle('Computer Science-2024-B')}
-                      />
-                      <Label htmlFor="cs-b">Class B</Label>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Select specific classes or leave empty to send to all students
-                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="attachments">Attachments</Label>
@@ -401,7 +330,7 @@ export const Notices: React.FC = () => {
                       <span>•</span>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {new Date(notice.createdAt).toLocaleDateString()}
+                        {new Date(notice.date).toLocaleDateString()}
                       </div>
                       <span>•</span>
                       <span>{notice.department}</span>
