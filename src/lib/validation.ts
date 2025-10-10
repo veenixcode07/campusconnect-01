@@ -2,14 +2,14 @@ import { z } from 'zod';
 
 // Authentication Validation
 export const loginSchema = z.object({
-  email: z
+  sapid: z
     .string()
     .trim()
-    .email("Invalid email address")
-    .max(255, "Email must be less than 255 characters"),
+    .min(1, "SAP ID is required")
+    .max(20, "SAP ID must be less than 20 characters"),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
+    .min(6, "Password must be at least 6 characters")
     .max(100, "Password must be less than 100 characters")
 });
 
