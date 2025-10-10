@@ -23,10 +23,11 @@ export const LoginForm: React.FC = () => {
     try {
       // Validate input
       const validatedData = loginSchema.parse({ sapid, password });
+      const sapidNorm = validatedData.sapid.trim().toUpperCase();
       
       // Get email by SAP ID
       const { data: email, error: lookupError } = await supabase
-        .rpc('get_email_by_sapid', { input_sapid: validatedData.sapid });
+        .rpc('get_email_by_sapid', { input_sapid: sapidNorm });
       
       if (lookupError || !email) {
         throw new Error('Invalid SAP ID or password');
