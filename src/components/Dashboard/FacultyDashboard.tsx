@@ -22,8 +22,13 @@ interface FacultyDashboardProps {
 }
 
 export const FacultyDashboard: React.FC<FacultyDashboardProps> = ({ user }) => {
-  const { assignments } = useApp();
+  const { getFilteredAssignments, getFilteredNotices, getFilteredResources } = useApp();
   const { queries } = useQuery();
+  
+  // Get filtered data based on user's role
+  const assignments = getFilteredAssignments();
+  const notices = getFilteredNotices();
+  const resources = getFilteredResources();
 
   // Mock data - in real app this would come from API
   const stats = {

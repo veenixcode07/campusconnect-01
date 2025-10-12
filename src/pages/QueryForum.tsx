@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 
 export const QueryForum: React.FC = () => {
   const { user } = useAuth();
-  const { queries, addQuery, addAnswer, likeQuery, markAnswerAsAccepted, deleteQuery } = useQuery();
+  const { filteredQueries, addQuery, addAnswer, likeQuery, markAnswerAsAccepted, deleteQuery } = useQuery();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
@@ -25,7 +25,8 @@ export const QueryForum: React.FC = () => {
   const [questionSubject, setQuestionSubject] = useState('');
   const [questionContent, setQuestionContent] = useState('');
 
-  const filteredQueries = queries.filter(query =>
+  // Filter queries based on search (using already class-filtered queries)
+  const searchFilteredQueries = filteredQueries.filter(query =>
     query.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     query.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
     query.subject.toLowerCase().includes(searchQuery.toLowerCase())
@@ -105,7 +106,7 @@ export const QueryForum: React.FC = () => {
     });
   };
 
-  const selectedQueryData = selectedQuery ? queries.find(q => q.id === selectedQuery) : null;
+  const selectedQueryData = selectedQuery ? searchFilteredQueries.find(q => q.id === selectedQuery) : null;
 
   return (
     <div className="space-y-6">
@@ -161,7 +162,14 @@ export const QueryForum: React.FC = () => {
       </div>
 
       <div className="grid gap-4">
-        {filteredQueries.map((query) => (
+        {searchFilteredQueries.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-8">
+              <p className="text-muted-foreground">No questions found for your class.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          searchFilteredQueries.map((query) => (
           <Card key={query.id} className="hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -320,7 +328,8 @@ export const QueryForum: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

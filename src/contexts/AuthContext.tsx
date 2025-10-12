@@ -1,120 +1,98 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, AuthState, UserRole } from '@/types/auth';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, AuthState, UserRole } from '../types/auth';
 
 interface AuthContextType extends AuthState {
   login: (sapid: string, password: string) => Promise<void>;
   logout: () => void;
-  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
-// Mock users for demo - in real app this would come from Supabase
-const mockUsers: Record<string, { password: string; user: User }> = {
-  'STU001': {
-    password: 'password123',
-    user: {
-      id: '1',
-      email: 'student@college.edu',
-      name: 'John Doe',
-      role: 'student',
-      department: 'Computer Science',
-      year: '3rd Year',
-      createdAt: new Date().toISOString(),
-    }
-  },
-  'ADM001': {
-    password: 'admin123',
-    user: {
-      id: '2',
-      email: 'admin@college.edu',
-      name: 'Jane Smith',
-      role: 'admin',
-      department: 'Computer Science',
-      year: '4th Year',
-      createdAt: new Date().toISOString(),
-    }
-  },
-  'FAC001': {
-    password: 'faculty123',
-    user: {
-      id: '3',
-      email: 'faculty@college.edu',
-      name: 'Dr. Robert Johnson',
-      role: 'faculty',
-      department: 'Computer Science',
-      createdAt: new Date().toISOString(),
-    }
-  }
-};
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    loading: true,
-    error: null,
-  });
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem('campus_connect_user');
+    // Check for existing session on mount
+    const savedUser = localStorage.getItem('user');
     if (savedUser) {
       try {
-        const user = JSON.parse(savedUser);
-        setAuthState({ user, loading: false, error: null });
-      } catch (error) {
-        localStorage.removeItem('campus_connect_user');
-        setAuthState({ user: null, loading: false, error: null });
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('user');
       }
-    } else {
-      setAuthState({ user: null, loading: false, error: null });
     }
+    setLoading(false);
   }, []);
 
-  const login = async (sapid: string, password: string): Promise<void> => {
-    setAuthState(prev => ({ ...prev, loading: true, error: null }));
+  const login = async (sapid: string, password: string) => {
+    setLoading(true);
+    setError(null);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Demo authentication logic
+      const validCredentials = [
+        { sapid: 'STU001', password: 'password123', name: 'John Student', role: 'student' as UserRole, department: 'Computer Science', year: '2024', section: 'A', rollNumber: 'CS24001' },
+        { sapid: 'STU002', password: 'password123', name: 'Emma Wilson', role: 'student' as UserRole, department: 'Computer Science', year: '2024', section: 'B', rollNumber: 'CS24002' },
+        { sapid: 'FAC001', password: 'faculty123', name: 'Dr. Sarah Faculty', role: 'faculty' as UserRole, department: 'Computer Science' },
+        { sapid: 'FAC002', password: 'faculty123', name: 'Dr. Michael Chen', role: 'faculty' as UserRole, department: 'Computer Science' },
+        { sapid: 'ADM001', password: 'admin123', name: 'Alex Admin', role: 'admin' as UserRole, department: 'Computer Science', year: '2024', section: 'A' },
+        { sapid: 'ADM002', password: 'admin123', name: 'Sarah Admin', role: 'admin' as UserRole, department: 'Computer Science', year: '2024', section: 'B' }
+      ];
+
+      const credential = validCredentials.find(c => c.sapid === sapid && c.password === password);
       
-      const userRecord = mockUsers[sapid];
-      if (!userRecord || userRecord.password !== password) {
-        throw new Error('Invalid SAPID or password');
+      if (!credential) {
+        throw new Error('Invalid credentials');
       }
 
-      const user = userRecord.user;
-      localStorage.setItem('campus_connect_user', JSON.stringify(user));
-      setAuthState({ user, loading: false, error: null });
-    } catch (error) {
-      setAuthState({
-        user: null,
-        loading: false,
-        error: error instanceof Error ? error.message : 'Login failed'
-      });
-      throw error;
+      // Create user object directly for demo
+      const userData: User = {
+        id: `${credential.sapid}-id`,
+        sapid: credential.sapid,
+        name: credential.name,
+        role: credential.role,
+        department: credential.department,
+        year: credential.year,
+        section: credential.section,
+        rollNumber: credential.rollNumber,
+        createdAt: new Date().toISOString()
+      };
+
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during login';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('campus_connect_user');
-    setAuthState({ user: null, loading: false, error: null });
+    setUser(null);
+    localStorage.removeItem('user');
   };
 
-  const value: AuthContextType = {
-    ...authState,
-    login,
-    logout,
-    isAuthenticated: !!authState.user,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      error,
+      login,
+      logout
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

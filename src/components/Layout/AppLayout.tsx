@@ -43,7 +43,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
         {/* Main Content */}
         <main className="flex-1 md:ml-64">
-          <div className="py-6 px-4 sm:px-6 lg:px-8">
+          <div className="py-4 md:py-6 px-3 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>

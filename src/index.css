@@ -2,6 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile-first responsive design improvements */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  /* Improve touch targets on mobile */
+  @media (max-width: 767px) {
+    button, .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better spacing on mobile */
+    .mobile-friendly {
+      @apply px-4 py-2;
+    }
+    
+    /* Larger text on mobile for better readability */
+    .mobile-text {
+      @apply text-base;
+    }
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

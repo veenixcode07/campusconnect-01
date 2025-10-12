@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   Bell, 
@@ -22,11 +23,16 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'react-router-dom';
 
 export const Notices: React.FC = () => {
   const { user } = useAuth();
-  const { notices, addNotice, pinNotice, unpinNotice } = useApp();
+  const { getFilteredNotices, addNotice, pinNotice, unpinNotice } = useApp();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Get filtered notices based on user's role and class
+  const notices = getFilteredNotices();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
@@ -41,8 +47,19 @@ export const Notices: React.FC = () => {
     subject: '',
     category: 'general' as 'general' | 'exam' | 'urgent',
     pinned: false,
-    attachments: [] as string[]
+    attachments: [] as string[],
+    classTargets: [] as string[]
   });
+
+  // Check URL params to auto-open create dialog
+  useEffect(() => {
+    if (searchParams.get('action') === 'create') {
+      setIsCreateModalOpen(true);
+      // Remove the search param after opening
+      searchParams.delete('action');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleCreateNotice = () => {
     if (!newNotice.title.trim() || !newNotice.content.trim()) {
@@ -71,7 +88,8 @@ export const Notices: React.FC = () => {
       subject: '',
       category: 'general',
       pinned: false,
-      attachments: []
+      attachments: [],
+      classTargets: []
     });
     setIsCreateModalOpen(false);
   };
@@ -82,6 +100,15 @@ export const Notices: React.FC = () => {
     setNewNotice(prev => ({
       ...prev,
       attachments: [...prev.attachments, ...fileNames]
+    }));
+  };
+
+  const handleClassToggle = (className: string) => {
+    setNewNotice(prev => ({
+      ...prev,
+      classTargets: prev.classTargets.includes(className)
+        ? prev.classTargets.filter(c => c !== className)
+        : [...prev.classTargets, className]
     }));
   };
 
@@ -224,6 +251,30 @@ export const Notices: React.FC = () => {
                       onChange={(e) => setNewNotice({...newNotice, subject: e.target.value})}
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="classTargets">Target Classes (Leave empty for all classes)</Label>
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="cs-a" 
+                        checked={newNotice.classTargets.includes('Computer Science-2024-A')}
+                        onCheckedChange={() => handleClassToggle('Computer Science-2024-A')}
+                      />
+                      <Label htmlFor="cs-a">Class A</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="cs-b" 
+                        checked={newNotice.classTargets.includes('Computer Science-2024-B')}
+                        onCheckedChange={() => handleClassToggle('Computer Science-2024-B')}
+                      />
+                      <Label htmlFor="cs-b">Class B</Label>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Select specific classes or leave empty to send to all students
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="attachments">Attachments</Label>

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 export interface Assignment {
   id: string;
@@ -25,6 +26,7 @@ export interface Notice {
   pinned: boolean;
   pinnedUntil?: Date;
   attachments: string[];
+  classTargets: string[]; // Added class targeting for notices
 }
 
 export interface Resource {
@@ -40,6 +42,7 @@ export interface Resource {
   likes: number;
   tags: string[];
   favorited: boolean;
+  classTargets: string[]; // Added class targeting for resources
 }
 
 export interface StudentNote {
@@ -55,6 +58,10 @@ interface AppContextType {
   notices: Notice[];
   resources: Resource[];
   studentNotes: StudentNote[];
+  // Filtered data based on user role and class
+  getFilteredAssignments: () => Assignment[];
+  getFilteredNotices: () => Notice[];
+  getFilteredResources: () => Resource[];
   addAssignment: (assignment: Omit<Assignment, 'id' | 'timestamp'>) => void;
   addNotice: (notice: Omit<Notice, 'id' | 'date'>) => void;
   toggleResourceFavorite: (resourceId: string) => void;
@@ -76,161 +83,193 @@ export const useApp = () => {
   return context;
 };
 
-const initialAssignments: Assignment[] = [
-  {
-    id: '1',
-    title: 'Binary Tree Implementation',
-    description: 'Implement a binary search tree with insert, delete, and search operations. Include proper traversal methods (inorder, preorder, postorder) and balance checking functionality.',
-    subject: 'Data Structures',
-    dueDate: '2024-01-25',
-    author: 'Dr. Sarah Wilson',
-    authorRole: 'faculty',
-    timestamp: '2024-01-15T10:00:00Z',
-    attachments: ['bst_requirements.pdf', 'test_cases.txt'],
-    classTargets: ['CSE-A', 'CSE-B']
-  },
-  {
-    id: '2',
-    title: 'Process Scheduling Algorithms',
-    description: 'Compare and implement three different process scheduling algorithms: FCFS, SJF, and Round Robin. Analyze their performance with different workloads.',
-    subject: 'Operating Systems',
-    dueDate: '2024-01-30',
-    author: 'Prof. Michael Brown',
-    authorRole: 'faculty',
-    timestamp: '2024-01-16T14:30:00Z',
-    attachments: ['scheduling_template.docx'],
-    classTargets: ['CSE-A', 'CSE-B']
-  },
-  {
-    id: '3',
-    title: 'Network Protocol Analysis',
-    description: 'Analyze the TCP/IP protocol stack using Wireshark. Capture and examine network packets to understand protocol behavior in different scenarios.',
-    subject: 'Computer Networks',
-    dueDate: '2024-02-05',
-    author: 'Dr. Emily Davis',
-    authorRole: 'faculty',
-    timestamp: '2024-01-17T09:15:00Z',
-    attachments: ['wireshark_guide.pdf', 'sample_captures.pcap'],
-    classTargets: ['CSE-A']
-  }
-];
-
-const initialNotices: Notice[] = [
-  {
-    id: '1',
-    title: 'Mid-term Examination Schedule Released',
-    content: 'The mid-term examination schedule for all courses has been finalized. Please check your respective course pages for detailed timings and venues.',
-    author: 'Dr. Sarah Wilson',
-    department: 'Academic Office',
-    subject: 'All Subjects',
-    category: 'exam',
-    date: '2024-01-15',
-    pinned: true,
-    attachments: ['exam_schedule.pdf']
-  },
-  {
-    id: '2',
-    title: 'Library Hours Extended During Exam Period',
-    content: 'The library will remain open 24/7 during the examination period (Jan 20 - Feb 5). Additional study spaces have been arranged.',
-    author: 'Library Administration',
-    department: 'Library',
-    category: 'general',
-    date: '2024-01-14',
-    pinned: false,
-    attachments: []
-  },
-  {
-    id: '3',
-    title: 'Campus Network Maintenance',
-    content: 'The campus network will undergo maintenance on January 18, 2024, from 12:00 AM to 6:00 AM. Internet services may be interrupted.',
-    author: 'IT Department',
-    department: 'IT Services',
-    category: 'urgent',
-    date: '2024-01-11',
-    pinned: false,
-    attachments: []
-  }
-];
-
-const initialResources: Resource[] = [
-  {
-    id: '1',
-    title: 'Data Structures - Binary Trees Complete Guide',
-    description: 'Comprehensive guide covering binary trees, BST, AVL trees, and operations with examples.',
-    type: 'pdf',
-    subject: 'Data Structures',
-    uploadedBy: 'Dr. Sarah Wilson',
-    uploadDate: '2024-01-15',
-    size: '2.4 MB',
-    downloads: 156,
-    likes: 23,
-    tags: ['binary-trees', 'bst', 'algorithms'],
-    favorited: false
-  },
-  {
-    id: '2',
-    title: 'Operating Systems - Process Scheduling Presentation',
-    description: 'Detailed presentation on various process scheduling algorithms including FCFS, SJF, Round Robin.',
-    type: 'ppt',
-    subject: 'Operating Systems',
-    uploadedBy: 'Prof. Michael Brown',
-    uploadDate: '2024-01-14',
-    size: '5.1 MB',
-    downloads: 134,
-    likes: 19,
-    tags: ['scheduling', 'processes', 'algorithms'],
-    favorited: false
-  },
-  {
-    id: '3',
-    title: 'Computer Networks - OSI Model Explained',
-    description: 'Video lecture explaining the 7 layers of OSI model with real-world examples.',
-    type: 'video',
-    subject: 'Computer Networks',
-    uploadedBy: 'Dr. Emily Davis',
-    uploadDate: '2024-01-13',
-    size: '45.2 MB',
-    downloads: 89,
-    likes: 15,
-    tags: ['osi-model', 'networking', 'protocols'],
-    favorited: true
-  }
-];
-
-const initialStudentNotes: StudentNote[] = [
-  {
-    id: '1',
-    studentId: '1',
-    note: 'Excellent performance in recent assignments. Shows strong understanding of binary trees and algorithms.',
-    author: 'Dr. Sarah Wilson',
-    timestamp: '2024-01-15T10:30:00Z'
-  },
-  {
-    id: '2',
-    studentId: '3',
-    note: 'Student needs additional support in understanding complex data structures. Recommended for tutoring sessions.',
-    author: 'Dr. Sarah Wilson',
-    timestamp: '2024-01-14T14:15:00Z'
-  },
-  {
-    id: '3',
-    studentId: '4',
-    note: 'Missing several assignments. Contacted student about make-up work. Needs immediate attention.',
-    author: 'Prof. Michael Brown',
-    timestamp: '2024-01-13T09:45:00Z'
-  }
-];
-
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [assignments, setAssignments] = useState<Assignment[]>(initialAssignments);
-  const [notices, setNotices] = useState<Notice[]>(initialNotices);
-  const [resources, setResources] = useState<Resource[]>(initialResources);
-  const [studentNotes, setStudentNotes] = useState<StudentNote[]>(initialStudentNotes);
+  const { user } = useAuth();
+  
+  // Initialize with mock data
+  const [assignments, setAssignments] = useState<Assignment[]>([
+    {
+      id: '1',
+      title: 'Data Structures Project',
+      description: 'Implement a binary search tree with insertion, deletion, and traversal operations.',
+      subject: 'Computer Science',
+      dueDate: '2024-09-15T23:59:59Z',
+      author: 'Dr. Sarah Faculty',
+      authorRole: 'faculty',
+      timestamp: '2024-08-20T10:00:00Z',
+      attachments: [],
+      classTargets: ['Computer Science-2024-A']
+    },
+    {
+      id: '2',
+      title: 'Algorithm Analysis Report',
+      description: 'Analyze the time complexity of sorting algorithms and write a comprehensive report.',
+      subject: 'Computer Science',
+      dueDate: '2024-09-10T23:59:59Z',
+      author: 'Dr. Sarah Faculty',
+      authorRole: 'faculty',
+      timestamp: '2024-08-15T14:30:00Z',
+      attachments: [],
+      classTargets: ['Computer Science-2024-A']
+    },
+    {
+      id: '3',
+      title: 'Database Design Project',
+      description: 'Design and implement a complete database system for a library management system.',
+      subject: 'Database Management',
+      dueDate: '2024-09-20T23:59:59Z',
+      author: 'Dr. Michael Chen',
+      authorRole: 'faculty',
+      timestamp: '2024-08-18T09:00:00Z',
+      attachments: [],
+      classTargets: ['Computer Science-2024-B']
+    },
+    {
+      id: '4',
+      title: 'Operating Systems Lab',
+      description: 'Complete the process scheduling simulation lab assignment.',
+      subject: 'Operating Systems',
+      dueDate: '2024-09-12T23:59:59Z',
+      author: 'Dr. Michael Chen',
+      authorRole: 'faculty',
+      timestamp: '2024-08-16T11:30:00Z',
+      attachments: [],
+      classTargets: ['Computer Science-2024-A', 'Computer Science-2024-B']
+    }
+  ]);
+
+  const [notices, setNotices] = useState<Notice[]>([
+    {
+      id: '1',
+      title: 'Welcome to New Semester',
+      content: 'Welcome all students to the new academic semester. Please check your schedules and report any discrepancies.',
+      author: 'Admin User',
+      department: 'Administration',
+      subject: 'General',
+      category: 'general',
+      date: '2024-08-20',
+      pinned: true,
+      attachments: [],
+      classTargets: [] // General notice for all
+    },
+    {
+      id: '2',
+      title: 'Mid-term Examination Schedule',
+      content: 'The mid-term examinations will begin from next Monday. Please prepare accordingly and check the timetable.',
+      author: 'Dr. Sarah Faculty',
+      department: 'Computer Science',
+      subject: 'Computer Science',
+      category: 'exam',
+      date: '2024-08-18',
+      pinned: false,
+      attachments: [],
+      classTargets: [] // General notice for all
+    },
+    {
+      id: '3',
+      title: 'Class A - Lab Schedule Update',
+      content: 'Lab sessions for Computer Science A will be held in Lab 2 starting next week. Please note the room change.',
+      author: 'Dr. Sarah Faculty',
+      department: 'Computer Science',
+      subject: 'Computer Science',
+      category: 'general',
+      date: '2024-08-19',
+      pinned: false,
+      attachments: [],
+      classTargets: ['Computer Science-2024-A'] // Class A specific
+    },
+    {
+      id: '4',
+      title: 'Class B - Project Submission Guidelines',
+      content: 'All project submissions for Class B students must follow the new formatting guidelines available on the portal.',
+      author: 'Dr. Michael Chen',
+      department: 'Computer Science',
+      subject: 'Computer Science',
+      category: 'general',
+      date: '2024-08-17',
+      pinned: false,
+      attachments: [],
+      classTargets: ['Computer Science-2024-B'] // Class B specific
+    }
+  ]);
+
+  const [resources, setResources] = useState<Resource[]>([
+    {
+      id: '1',
+      title: 'Introduction to Algorithms PDF',
+      description: 'Comprehensive guide to algorithms and data structures',
+      type: 'pdf',
+      subject: 'Computer Science',
+      uploadedBy: 'Dr. Sarah Faculty',
+      uploadDate: '2024-08-15',
+      size: '2.5 MB',
+      downloads: 45,
+      likes: 12,
+      tags: ['algorithms', 'data-structures', 'programming'],
+      favorited: false,
+      classTargets: ['Computer Science-2024-A'] // Class A specific
+    },
+    {
+      id: '2',
+      title: 'Database Design Tutorial',
+      description: 'Step-by-step tutorial on database design principles',
+      type: 'video',
+      subject: 'Computer Science',
+      uploadedBy: 'Dr. Sarah Faculty',
+      uploadDate: '2024-08-10',
+      size: '150 MB',
+      downloads: 28,
+      likes: 8,
+      tags: ['database', 'sql', 'design'],
+      favorited: false,
+      classTargets: [] // General resource for all
+    },
+    {
+      id: '3',
+      title: 'Operating Systems Concepts',
+      description: 'Complete notes on operating system fundamentals and concepts',
+      type: 'pdf',
+      subject: 'Operating Systems',
+      uploadedBy: 'Dr. Michael Chen',
+      uploadDate: '2024-08-12',
+      size: '3.2 MB',
+      downloads: 62,
+      likes: 18,
+      tags: ['os', 'processes', 'memory-management'],
+      favorited: false,
+      classTargets: ['Computer Science-2024-B'] // Class B specific
+    },
+    {
+      id: '4',
+      title: 'Data Structures Implementation Guide',
+      description: 'Code examples and implementations of common data structures',
+      type: 'doc',
+      subject: 'Data Structures',
+      uploadedBy: 'Dr. Sarah Faculty',
+      uploadDate: '2024-08-14',
+      size: '1.8 MB',
+      downloads: 39,
+      likes: 15,
+      tags: ['data-structures', 'implementation', 'code'],
+      favorited: false,
+      classTargets: ['Computer Science-2024-A', 'Computer Science-2024-B'] // Both classes
+    }
+  ]);
+
+  const [studentNotes, setStudentNotes] = useState<StudentNote[]>([
+    {
+      id: '1',
+      studentId: 'STU001',
+      note: 'Student shows excellent progress in data structures concepts.',
+      author: 'Dr. Sarah Faculty',
+      timestamp: '2024-08-20T10:00:00Z'
+    }
+  ]);
 
   const addAssignment = (newAssignment: Omit<Assignment, 'id' | 'timestamp'>) => {
     const assignment: Assignment = {
       ...newAssignment,
-      id: Date.now().toString(),
+      id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date().toISOString()
     };
     setAssignments(prev => [assignment, ...prev]);
@@ -239,7 +278,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addNotice = (newNotice: Omit<Notice, 'id' | 'date'>) => {
     const notice: Notice = {
       ...newNotice,
-      id: Date.now().toString(),
+      id: Math.random().toString(36).substr(2, 9),
       date: new Date().toISOString().split('T')[0]
     };
     setNotices(prev => [notice, ...prev]);
@@ -256,7 +295,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const addStudentNote = (newNote: Omit<StudentNote, 'id' | 'timestamp'>) => {
     const note: StudentNote = {
       ...newNote,
-      id: Date.now().toString(),
+      id: Math.random().toString(36).substr(2, 9),
       timestamp: new Date().toISOString()
     };
     setStudentNotes(prev => [note, ...prev]);
@@ -294,6 +333,65 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setResources(prev => prev.filter(resource => resource.id !== resourceId));
   };
 
+  // Role-based filtering functions
+  const getFilteredAssignments = () => {
+    if (!user) return assignments;
+    
+    const userClass = `${user.department}-${user.year}-${user.section}`;
+    
+    if (user.role === 'student' || user.role === 'admin') {
+      // Students and student admins see only assignments for their class + general ones
+      return assignments.filter(assignment => 
+        assignment.classTargets.includes(userClass) || 
+        assignment.classTargets.length === 0 ||
+        assignment.classTargets.some(target => target.includes('general'))
+      );
+    } else if (user.role === 'faculty') {
+      // Faculty can see all assignments but prioritize ones they created
+      return assignments;
+    }
+    
+    return assignments;
+  };
+
+  const getFilteredNotices = () => {
+    if (!user) return notices;
+    
+    const userClass = `${user.department}-${user.year}-${user.section}`;
+    
+    if (user.role === 'student' || user.role === 'admin') {
+      // Students and student admins see general notices + their class-specific notices
+      return notices.filter(notice => 
+        notice.classTargets.length === 0 || // General notices (no class targeting)
+        notice.classTargets.includes(userClass) // Their specific class
+      );
+    } else if (user.role === 'faculty') {
+      // Faculty can see all notices
+      return notices;
+    }
+    
+    return notices;
+  };
+
+  const getFilteredResources = () => {
+    if (!user) return resources;
+    
+    const userClass = `${user.department}-${user.year}-${user.section}`;
+    
+    if (user.role === 'student' || user.role === 'admin') {
+      // Students and student admins see general resources + their class-specific resources
+      return resources.filter(resource => 
+        resource.classTargets.length === 0 || // General resources (no class targeting)
+        resource.classTargets.includes(userClass) // Their specific class
+      );
+    } else if (user.role === 'faculty') {
+      // Faculty can see all resources
+      return resources;
+    }
+    
+    return resources;
+  };
+
   // Auto-unpin expired notices
   useEffect(() => {
     const checkExpiredPins = () => {
@@ -316,6 +414,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       notices,
       resources,
       studentNotes,
+      getFilteredAssignments,
+      getFilteredNotices,
+      getFilteredResources,
       addAssignment,
       addNotice,
       toggleResourceFavorite,

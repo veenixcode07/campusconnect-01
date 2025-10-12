@@ -2,11 +2,13 @@ export type UserRole = 'student' | 'admin' | 'faculty';
 
 export interface User {
   id: string;
-  email: string;
+  sapid: string;
   name: string;
   role: UserRole;
   department?: string;
   year?: string;
+  section?: string;
+  rollNumber?: string;
   createdAt: string;
 }
 

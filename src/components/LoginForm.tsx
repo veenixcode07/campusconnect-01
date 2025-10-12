@@ -6,16 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const LoginForm: React.FC = () => {
   const [sapid, setSapid] = useState('');
   const [password, setPassword] = useState('');
-  const { login, loading, error } = useAuth();
+const { login, loading, error } = useAuth();
+const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await login(sapid, password);
+      navigate('/dashboard', { replace: true });
     } catch (error) {
       // Clear fields on error
       setSapid('');
@@ -84,10 +87,22 @@ export const LoginForm: React.FC = () => {
 
           <div className="mt-6 p-4 bg-muted/50 rounded-lg text-sm">
             <p className="font-medium mb-2">Demo Accounts:</p>
-            <div className="space-y-1 text-xs">
-              <p><strong>Student:</strong> STU001 / password123</p>
-              <p><strong>Admin:</strong> ADM001 / admin123</p>
-              <p><strong>Faculty:</strong> FAC001 / faculty123</p>
+            <div className="space-y-2 text-xs">
+              <div>
+                <p><strong>Students:</strong></p>
+                <p>STU001 / password123 (John Student - Class A)</p>
+                <p>STU002 / password123 (Emma Wilson - Class B)</p>
+              </div>
+              <div>
+                <p><strong>Faculty:</strong></p>
+                <p>FAC001 / faculty123 (Dr. Sarah Faculty)</p>
+                <p>FAC002 / faculty123 (Dr. Michael Chen)</p>
+              </div>
+              <div>
+                <p><strong>Admin:</strong></p>
+                <p>ADM001 / admin123 (Alex Admin - Class A)</p>
+                <p>ADM002 / admin123 (Sarah Admin - Class B)</p>
+              </div>
             </div>
           </div>
         </CardContent>
